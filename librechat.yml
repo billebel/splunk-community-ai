@@ -1,0 +1,29 @@
+version: '3.4'
+
+services:
+  api:
+    volumes:
+    - type: bind
+      source: ./librechat.yaml
+      target: /app/librechat.yaml
+    #- /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - default
+      - catalyst-network # Corrected network name
+
+  ollama:
+    image: ollama/ollama:latest
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [compute, utility]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama:/root/.ollama
+
+networks:
+  catalyst-network: # Corrected network name
+    external: true

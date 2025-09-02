@@ -1,0 +1,212 @@
+metadata:
+  name: "s3_storage"
+  version: "1.0.0"
+  description: "AWS S3 and S3-compatible storage monitoring and analysis tools (read-only)"
+  vendor: "Catalyst MCP"
+  license: "MIT"
+  compatibility: "AWS S3, MinIO, DigitalOcean Spaces"
+  domain: "storage"
+  tags: ["s3", "storage", "aws", "cloud", "files"]
+  pricing_tier: "free"
+  required_capabilities: ["file_read"]
+
+connection:
+  type: "filesystem"
+  engine: "s3"
+  bucket: "{S3_BUCKET}"
+  timeout: 60
+  auth:
+    method: "aws_iam"
+    config:
+      access_key: "{AWS_ACCESS_KEY_ID}"
+      secret_key: "{AWS_SECRET_ACCESS_KEY}"
+      region: "{AWS_REGION:-us-east-1}"
+
+tools:
+  list_objects:
+    type: "list"
+    description: "List objects in S3 bucket or directory"
+    operation: "list"
+    path: "{prefix}"
+    parameters:
+      - name: "prefix"
+        type: "string"
+        required: false
+        default: ""
+        description: "Object key prefix to filter results"
+      - name: "max_keys"
+        type: "integer"
+        default: 1000
+        min_value: 1
+        max_value: 1000
+        description: "Maximum number of objects to return"
+      - name: "recursive"
+        type: "boolean"
+        default: false
+        description: "Whether to list objects recursively"
+
+
+  download_file:
+    type: "execute"
+    description: "Download file from S3 bucket"
+    operation: "download"
+    path: "{object_key}"
+    parameters:
+      - name: "object_key"
+        type: "string"
+        required: true
+        description: "S3 object key to download"
+      - name: "encoding"
+        type: "string"
+        required: false
+        enum: ["text", "binary"]
+        default: "text"
+        description: "How to encode the file content in response"
+
+  get_object_info:
+    type: "details"
+    description: "Get detailed information about an S3 object"
+    operation: "info"
+    path: "{object_key}"
+    parameters:
+      - name: "object_key"
+        type: "string"
+        required: true
+        description: "S3 object key to inspect"
+
+
+  generate_presigned_url:
+    type: "execute"
+    description: "Generate presigned URL for temporary access to object"
+    operation: "presigned_url"
+    parameters:
+      - name: "object_key"
+        type: "string"
+        required: true
+        description: "S3 object key"
+      - name: "expiration"
+        type: "integer"
+        default: 3600
+        min_value: 60
+        max_value: 604800
+        description: "URL expiration time in seconds"
+      - name: "http_method"
+        type: "string"
+        enum: ["GET"]
+        default: "GET"
+        description: "HTTP method the URL will be used for (read-only)"
+
+  analyze_storage_usage:
+    type: "list"
+    description: "Analyze storage usage patterns by prefix"
+    operation: "analyze"
+    parameters:
+      - name: "prefix"
+        type: "string"
+        required: false
+        default: ""
+        description: "Prefix to analyze"
+      - name: "group_by"
+        type: "string"
+        enum: ["size", "date", "type"]
+        default: "size"
+        description: "How to group analysis results"
+
+prompts:
+  backup_management:
+    description: "Manage file backups and archival to S3"
+    template: |
+      Manage file backups and data archival using S3 storage:
+      
+      For backup operations:
+      1. Upload files using appropriate storage classes:
+         - STANDARD for frequently accessed backups
+         - STANDARD_IA for infrequent access
+         - GLACIER for long-term archival
+      
+      2. Organize backups with consistent naming:
+         - Use date-based prefixes: backups/2023/12/01/
+         - Include system/application identifiers
+         - Add metadata for backup type and retention
+      
+      3. Verify backup integrity:
+         - Use get_object_info to check file sizes
+         - Download and verify critical backups
+         - Monitor for backup failures
+      
+      For data lifecycle management:
+      - Use bulk_upload for efficient batch operations
+      - Set appropriate metadata for retention policies
+      - Generate presigned URLs for secure access
+      - Consider cross-region replication for disaster recovery
+      
+      Available operations:
+      - Upload backups: upload_file, bulk_upload
+      - Verify backups: get_object_info, download_file
+      - Manage access: generate_presigned_url
+      - Organize data: sync_directory
+    suggested_tools: ["upload_file", "bulk_upload", "get_object_info", "generate_presigned_url"]
+
+  content_distribution:
+    description: "Distribute and serve content through S3"
+    template: |
+      Set up content distribution and static file serving:
+      
+      For web content delivery:
+      1. Upload static assets with proper content types:
+         - Images: set appropriate MIME types
+         - CSS/JS: use text content types
+         - Documents: preserve original formats
+      
+      2. Generate temporary access URLs:
+         - Use generate_presigned_url for secure downloads
+         - Set appropriate expiration times
+         - Consider CDN integration
+      
+      3. Organize content efficiently:
+         - Use logical directory structures
+         - Implement caching strategies
+         - Monitor access patterns
+      
+      For media management:
+      - Upload media files with metadata
+      - Copy objects for different resolutions
+      - Use appropriate storage classes for cost optimization
+      - Implement automated cleanup for temporary files
+      
+      Best practices:
+      - Use consistent naming conventions
+      - Set proper metadata for content discovery
+      - Implement access logging and monitoring
+      - Consider compression for text-based content
+    suggested_tools: ["upload_file", "copy_object", "generate_presigned_url", "list_objects"]
+
+resources:
+  s3_documentation:
+    type: "documentation"
+    url: "https://docs.aws.amazon.com/s3/"
+    description: "AWS S3 official documentation"
+
+  storage_classes:
+    type: "guide"
+    url: "https://aws.amazon.com/s3/storage-classes/"
+    description: "S3 storage classes and pricing guide"
+
+  security_guide:
+    type: "guide"
+    url: "https://docs.aws.amazon.com/s3/latest/userguide/security.html"
+    description: "S3 security best practices"
+
+  lifecycle_policies:
+    type: "guide"
+    url: "https://docs.aws.amazon.com/s3/latest/userguide/object-lifecycle-mgmt.html"
+    description: "S3 lifecycle management and automation"
+
+error_mapping:
+  "NoSuchBucket": "The specified bucket does not exist"
+  "NoSuchKey": "The specified object key does not exist"
+  "AccessDenied": "Insufficient permissions for this S3 operation"
+  "InvalidAccessKeyId": "The AWS Access Key ID is invalid"
+  "SignatureDoesNotMatch": "Request signature authentication failed"
+  "BucketNotEmpty": "Cannot delete non-empty bucket"
+  "EntityTooLarge": "Object size exceeds maximum allowed limit"

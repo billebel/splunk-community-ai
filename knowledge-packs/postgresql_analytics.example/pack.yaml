@@ -1,0 +1,167 @@
+metadata:
+  name: "postgresql_analytics"
+  version: "1.0.0"
+  description: "PostgreSQL database analytics and monitoring tools (read-only)"
+  vendor: "Catalyst MCP"
+  license: "MIT"
+  compatibility: "PostgreSQL 12+"
+  domain: "database"
+  tags: ["database", "postgresql", "analytics", "sql"]
+  pricing_tier: "free"
+  required_capabilities: ["database_read"]
+
+connection:
+  type: "database"
+  engine: "postgresql"
+  host: "{DB_HOST}"
+  port: "{DB_PORT:-5432}"
+  database: "{DB_NAME}"
+  schema: "{DB_SCHEMA:-public}"
+  pool_size: 10
+  timeout: 30
+  auth:
+    method: "basic"
+    config:
+      username: "{DB_USER}"
+      password: "{DB_PASSWORD}"
+
+tools:
+  query_users:
+    type: "query"
+    description: "Query user data with filters and pagination"
+    sql: "SELECT id, username, email, created_at, last_login FROM users WHERE created_at > {since_date} ORDER BY created_at DESC LIMIT {limit}"
+    parameters:
+      - name: "since_date"
+        type: "string"
+        required: true
+        description: "Filter users created after this date (YYYY-MM-DD)"
+      - name: "limit"
+        type: "integer"
+        default: 100
+        min_value: 1
+        max_value: 1000
+        description: "Maximum number of results to return"
+
+  user_analytics:
+    type: "query"
+    description: "Get user analytics and statistics"
+    sql: |
+      SELECT 
+        COUNT(*) as total_users,
+        COUNT(CASE WHEN created_at > NOW() - INTERVAL '30 days' THEN 1 END) as new_users_30d,
+        COUNT(CASE WHEN last_login > NOW() - INTERVAL '7 days' THEN 1 END) as active_users_7d,
+        AVG(EXTRACT(days FROM NOW() - created_at)) as avg_account_age_days
+      FROM users
+      WHERE created_at >= {start_date} AND created_at <= {end_date}
+    parameters:
+      - name: "start_date"
+        type: "string"
+        required: false
+        default: "2023-01-01"
+        description: "Start date for analysis (YYYY-MM-DD)"
+      - name: "end_date"
+        type: "string"
+        required: false
+        default: "NOW()"
+        description: "End date for analysis (YYYY-MM-DD or NOW())"
+
+  identify_inactive_users:
+    type: "query"
+    description: "Identify inactive users for potential cleanup"
+    sql: "SELECT id, username, email, last_login, created_at FROM users WHERE last_login < NOW() - INTERVAL '{inactive_days} days' ORDER BY last_login ASC LIMIT {limit}"
+    parameters:
+      - name: "inactive_days"
+        type: "integer"
+        required: true
+        default: 365
+        description: "Number of days of inactivity to identify"
+      - name: "limit"
+        type: "integer"
+        default: 100
+        min_value: 1
+        max_value: 1000
+        description: "Maximum number of inactive users to return"
+
+  table_statistics:
+    type: "query"
+    description: "Get table size and row count statistics"
+    sql: |
+      SELECT 
+        schemaname,
+        tablename,
+        n_tup_ins as inserts,
+        n_tup_upd as updates,
+        n_tup_del as deletes,
+        n_live_tup as live_rows,
+        n_dead_tup as dead_rows,
+        pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as total_size
+      FROM pg_stat_user_tables 
+      WHERE schemaname = {schema_name}
+      ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+    parameters:
+      - name: "schema_name"
+        type: "string"
+        required: false
+        default: "public"
+        description: "Database schema to analyze"
+
+prompts:
+  database_health_check:
+    description: "Comprehensive database health analysis"
+    template: |
+      Please analyze the PostgreSQL database health using the following tools:
+      
+      1. First, get table statistics to understand data distribution: table_statistics
+      2. Then check user activity patterns: user_analytics
+      3. Look for any performance issues or recommendations
+      
+      Focus on:
+      - Table sizes and growth patterns
+      - User activity trends
+      - Potential optimization opportunities
+      - Data quality issues
+    suggested_tools: ["table_statistics", "user_analytics"]
+
+  user_management:
+    description: "User account management and cleanup"
+    template: |
+      Help manage user accounts with these capabilities:
+      
+      Available operations:
+      - Query users with filters: query_users
+      - Create new accounts: create_user
+      - Update login timestamps: update_user_login
+      - Bulk cleanup inactive users: bulk_user_cleanup
+      
+      For user creation, ensure:
+      - Usernames are unique and follow naming conventions
+      - Email addresses are properly validated
+      - Passwords are properly hashed before storage
+      
+      For cleanup operations:
+      - Always review inactive user list before deletion
+      - Consider data retention policies
+      - Ensure proper backup before bulk operations
+    suggested_tools: ["query_users", "create_user", "bulk_user_cleanup"]
+
+resources:
+  postgresql_docs:
+    type: "documentation"
+    url: "https://www.postgresql.org/docs/current/"
+    description: "Official PostgreSQL documentation"
+
+  sql_best_practices:
+    type: "guide"
+    url: "https://wiki.postgresql.org/wiki/Don%27t_Do_This"
+    description: "PostgreSQL performance best practices and anti-patterns"
+
+  connection_pooling:
+    type: "guide"
+    url: "https://www.postgresql.org/docs/current/runtime-config-connection.html"
+    description: "PostgreSQL connection pooling configuration"
+
+error_mapping:
+  "relation does not exist": "The specified table or view does not exist in the database"
+  "permission denied": "Insufficient database privileges for this operation"
+  "connection refused": "Unable to connect to PostgreSQL server - check host and port"
+  "authentication failed": "Database authentication failed - check username and password"

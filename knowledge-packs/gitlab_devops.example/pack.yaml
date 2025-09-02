@@ -1,0 +1,797 @@
+metadata:
+  name: "gitlab_devops"
+  version: "1.0.0"
+  description: "GitLab project management and CI/CD pipeline monitoring (read-only)"
+  vendor: "Catalyst MCP"
+  license: "MIT"
+  compatibility: "GitLab API v4"
+  domain: "devops"
+  tags: ["gitlab", "git", "devops", "ci-cd", "project-management"]
+  pricing_tier: "free"
+  required_capabilities: ["api_read"]
+
+connection:
+  type: "rest"
+  base_url: "{GITLAB_URL}/api/v4"
+  timeout: 30
+  verify_ssl: true
+  auth:
+    method: "bearer"
+    config:
+      token: "{GITLAB_TOKEN}"
+
+tools:
+  list_projects:
+    type: "list"
+    description: "List GitLab projects accessible to the user"
+    endpoint: "/projects"
+    method: "GET"
+    query_params:
+      visibility: "{visibility}"
+      order_by: "{order_by}"
+      sort: "{sort}"
+      search: "{search}"
+      simple: "true"
+      per_page: "{per_page}"
+      page: "{page}"
+    parameters:
+      - name: "visibility"
+        type: "string"
+        enum: ["private", "internal", "public"]
+        required: false
+        description: "Filter by project visibility level"
+      - name: "order_by"
+        type: "string"
+        enum: ["id", "name", "path", "created_at", "updated_at", "last_activity_at"]
+        default: "last_activity_at"
+        description: "Order projects by field"
+      - name: "sort"
+        type: "string"
+        enum: ["asc", "desc"]
+        default: "desc"
+        description: "Sort direction"
+      - name: "search"
+        type: "string"
+        required: false
+        description: "Search projects by name"
+      - name: "per_page"
+        type: "integer"
+        default: 30
+        min_value: 1
+        max_value: 100
+        description: "Results per page"
+      - name: "page"
+        type: "integer"
+        default: 1
+        description: "Page number"
+    transform:
+      type: "jq"
+      expression: '.[] | {id: .id, name: .name, path: .path, visibility: .visibility, description: .description, stars: .star_count, forks: .forks_count, issues_enabled: .issues_enabled, merge_requests_enabled: .merge_requests_enabled, wiki_enabled: .wiki_enabled, last_activity: .last_activity_at, created_at: .created_at, web_url: .web_url, default_branch: .default_branch}'
+
+  project_details:
+    type: "details"
+    description: "Get detailed information about a specific project"
+    endpoint: "/projects/{project_id}"
+    method: "GET"
+    parameters:
+      - name: "project_id"
+        type: "string"
+        required: true
+        description: "Project ID or URL-encoded path"
+    transform:
+      type: "jq"
+      expression: '{id: .id, name: .name, path: .path, description: .description, visibility: .visibility, created_at: .created_at, updated_at: .updated_at, last_activity_at: .last_activity_at, default_branch: .default_branch, tag_list: .tag_list, star_count: .star_count, forks_count: .forks_count, open_issues_count: .open_issues_count, namespace: .namespace.name, avatar_url: .avatar_url, web_url: .web_url, repository_size: .repository_size, statistics: .statistics, merge_requests_enabled: .merge_requests_enabled, issues_enabled: .issues_enabled, wiki_enabled: .wiki_enabled, snippets_enabled: .snippets_enabled, archived: .archived}'
+
+  list_issues:
+    type: "list"
+    description: "List issues for a project"
+    endpoint: "/projects/{project_id}/issues"
+    method: "GET"
+    query_params:
+      state: "{state}"
+      labels: "{labels}"
+      milestone: "{milestone}"
+      assignee_id: "{assignee_id}"
+      author_id: "{author_id}"
+      order_by: "{order_by}"
+      sort: "{sort}"
+      search: "{search}"
+      created_after: "{created_after}"
+      created_before: "{created_before}"
+      updated_after: "{updated_after}"
+      updated_before: "{updated_before}"
+      per_page: "{per_page}"
+      page: "{page}"
+    parameters:
+      - name: "project_id"
+        type: "string"
+        required: true
+        description: "Project ID or URL-encoded path"
+      - name: "state"
+        type: "string"
+        enum: ["opened", "closed", "all"]
+        default: "opened"
+        description: "Issue state filter"
+      - name: "labels"
+        type: "string"
+        required: false
+        description: "Comma-separated list of label names"
+      - name: "milestone"
+        type: "string"
+        required: false
+        description: "Milestone title"
+      - name: "assignee_id"
+        type: "string"
+        required: false
+        description: "Assignee user ID"
+      - name: "author_id"
+        type: "string"
+        required: false
+        description: "Author user ID"
+      - name: "order_by"
+        type: "string"
+        enum: ["created_at", "updated_at", "priority", "due_date", "relative_position", "label_priority", "milestone_due", "popularity", "weight"]
+        default: "created_at"
+        description: "Order issues by field"
+      - name: "sort"
+        type: "string"
+        enum: ["asc", "desc"]
+        default: "desc"
+        description: "Sort direction"
+      - name: "search"
+        type: "string"
+        required: false
+        description: "Search issues by title and description"
+      - name: "created_after"
+        type: "string"
+        required: false
+        description: "ISO 8601 timestamp"
+      - name: "created_before"
+        type: "string"
+        required: false
+        description: "ISO 8601 timestamp"
+      - name: "updated_after"
+        type: "string"
+        required: false
+        description: "ISO 8601 timestamp"
+      - name: "updated_before"
+        type: "string"
+        required: false
+        description: "ISO 8601 timestamp"
+      - name: "per_page"
+        type: "integer"
+        default: 30
+        min_value: 1
+        max_value: 100
+        description: "Results per page"
+      - name: "page"
+        type: "integer"
+        default: 1
+        description: "Page number"
+    transform:
+      type: "jq"
+      expression: '.[] | {iid: .iid, title: .title, state: .state, author: .author.name, assignees: [.assignees[].name], labels: .labels, milestone: (.milestone.title // null), created_at: .created_at, updated_at: .updated_at, closed_at: .closed_at, due_date: .due_date, web_url: .web_url, upvotes: .upvotes, downvotes: .downvotes, user_notes_count: .user_notes_count, description: (.description // "")[0:200]}'
+
+  list_merge_requests:
+    type: "list"
+    description: "List merge requests for a project"
+    endpoint: "/projects/{project_id}/merge_requests"
+    method: "GET"
+    query_params:
+      state: "{state}"
+      order_by: "{order_by}"
+      sort: "{sort}"
+      milestone: "{milestone}"
+      assignee_id: "{assignee_id}"
+      author_id: "{author_id}"
+      reviewer_id: "{reviewer_id}"
+      labels: "{labels}"
+      source_branch: "{source_branch}"
+      target_branch: "{target_branch}"
+      search: "{search}"
+      created_after: "{created_after}"
+      created_before: "{created_before}"
+      updated_after: "{updated_after}"
+      updated_before: "{updated_before}"
+      per_page: "{per_page}"
+      page: "{page}"
+    parameters:
+      - name: "project_id"
+        type: "string"
+        required: true
+        description: "Project ID or URL-encoded path"
+      - name: "state"
+        type: "string"
+        enum: ["opened", "closed", "locked", "merged", "all"]
+        default: "opened"
+        description: "Merge request state filter"
+      - name: "order_by"
+        type: "string"
+        enum: ["created_at", "updated_at", "priority", "label_priority", "milestone_due", "popularity", "title"]
+        default: "created_at"
+        description: "Order merge requests by field"
+      - name: "sort"
+        type: "string"
+        enum: ["asc", "desc"]
+        default: "desc"
+        description: "Sort direction"
+      - name: "milestone"
+        type: "string"
+        required: false
+        description: "Milestone title"
+      - name: "assignee_id"
+        type: "string"
+        required: false
+        description: "Assignee user ID"
+      - name: "author_id"
+        type: "string"
+        required: false
+        description: "Author user ID"
+      - name: "reviewer_id"
+        type: "string"
+        required: false
+        description: "Reviewer user ID"
+      - name: "labels"
+        type: "string"
+        required: false
+        description: "Comma-separated list of label names"
+      - name: "source_branch"
+        type: "string"
+        required: false
+        description: "Source branch name"
+      - name: "target_branch"
+        type: "string"
+        required: false
+        description: "Target branch name"
+      - name: "search"
+        type: "string"
+        required: false
+        description: "Search merge requests by title and description"
+      - name: "created_after"
+        type: "string"
+        required: false
+        description: "ISO 8601 timestamp"
+      - name: "created_before"
+        type: "string"
+        required: false
+        description: "ISO 8601 timestamp"
+      - name: "updated_after"
+        type: "string"
+        required: false
+        description: "ISO 8601 timestamp"
+      - name: "updated_before"
+        type: "string"
+        required: false
+        description: "ISO 8601 timestamp"
+      - name: "per_page"
+        type: "integer"
+        default: 30
+        min_value: 1
+        max_value: 100
+        description: "Results per page"
+      - name: "page"
+        type: "integer"
+        default: 1
+        description: "Page number"
+    transform:
+      type: "jq"
+      expression: '.[] | {iid: .iid, title: .title, state: .state, author: .author.name, assignee: (.assignee.name // null), reviewers: [.reviewers[].name], source_branch: .source_branch, target_branch: .target_branch, created_at: .created_at, updated_at: .updated_at, merged_at: .merged_at, closed_at: .closed_at, merge_status: .merge_status, draft: .draft, work_in_progress: .work_in_progress, milestone: (.milestone.title // null), labels: .labels, upvotes: .upvotes, downvotes: .downvotes, user_notes_count: .user_notes_count, web_url: .web_url, changes_count: .changes_count}'
+
+  pipeline_status:
+    type: "list"
+    description: "List CI/CD pipelines for a project"
+    endpoint: "/projects/{project_id}/pipelines"
+    method: "GET"
+    query_params:
+      scope: "{scope}"
+      status: "{status}"
+      ref: "{ref}"
+      sha: "{sha}"
+      yaml_errors: "{yaml_errors}"
+      username: "{username}"
+      updated_after: "{updated_after}"
+      updated_before: "{updated_before}"
+      order_by: "{order_by}"
+      sort: "{sort}"
+      per_page: "{per_page}"
+      page: "{page}"
+    parameters:
+      - name: "project_id"
+        type: "string"
+        required: true
+        description: "Project ID or URL-encoded path"
+      - name: "scope"
+        type: "string"
+        enum: ["running", "pending", "finished", "branches", "tags"]
+        required: false
+        description: "Pipeline scope filter"
+      - name: "status"
+        type: "string"
+        enum: ["created", "waiting_for_resource", "preparing", "pending", "running", "success", "failed", "canceled", "skipped", "manual", "scheduled"]
+        required: false
+        description: "Pipeline status filter"
+      - name: "ref"
+        type: "string"
+        required: false
+        description: "Git reference (branch or tag)"
+      - name: "sha"
+        type: "string"
+        required: false
+        description: "Commit SHA"
+      - name: "yaml_errors"
+        type: "string"
+        enum: ["true", "false"]
+        required: false
+        description: "Filter by YAML errors"
+      - name: "username"
+        type: "string"
+        required: false
+        description: "Filter by user who triggered pipeline"
+      - name: "updated_after"
+        type: "string"
+        required: false
+        description: "ISO 8601 timestamp"
+      - name: "updated_before"
+        type: "string"
+        required: false
+        description: "ISO 8601 timestamp"
+      - name: "order_by"
+        type: "string"
+        enum: ["id", "status", "ref", "updated_at", "user_id"]
+        default: "id"
+        description: "Order pipelines by field"
+      - name: "sort"
+        type: "string"
+        enum: ["asc", "desc"]
+        default: "desc"
+        description: "Sort direction"
+      - name: "per_page"
+        type: "integer"
+        default: 30
+        min_value: 1
+        max_value: 100
+        description: "Results per page"
+      - name: "page"
+        type: "integer"
+        default: 1
+        description: "Page number"
+    transform:
+      type: "jq"
+      expression: '.[] | {id: .id, project_id: .project_id, status: .status, source: .source, ref: .ref, sha: .sha[0:8], before_sha: .before_sha[0:8], tag: .tag, yaml_errors: .yaml_errors, user: .user.name, created_at: .created_at, updated_at: .updated_at, started_at: .started_at, finished_at: .finished_at, committed_at: .committed_at, duration: .duration, coverage: .coverage, web_url: .web_url}'
+
+  pipeline_jobs:
+    type: "details"
+    description: "Get jobs for a specific pipeline"
+    endpoint: "/projects/{project_id}/pipelines/{pipeline_id}/jobs"
+    method: "GET"
+    query_params:
+      scope: "{scope}"
+      include_retried: "{include_retried}"
+      per_page: "{per_page}"
+      page: "{page}"
+    parameters:
+      - name: "project_id"
+        type: "string"
+        required: true
+        description: "Project ID or URL-encoded path"
+      - name: "pipeline_id"
+        type: "string"
+        required: true
+        description: "Pipeline ID"
+      - name: "scope"
+        type: "string"
+        enum: ["created", "pending", "running", "failed", "success", "canceled", "skipped", "waiting_for_resource", "manual"]
+        required: false
+        description: "Job scope filter"
+      - name: "include_retried"
+        type: "string"
+        enum: ["true", "false"]
+        default: "false"
+        description: "Include retried jobs"
+      - name: "per_page"
+        type: "integer"
+        default: 30
+        min_value: 1
+        max_value: 100
+        description: "Results per page"
+      - name: "page"
+        type: "integer"
+        default: 1
+        description: "Page number"
+    transform:
+      type: "jq"
+      expression: '.[] | {id: .id, name: .name, stage: .stage, status: .status, created_at: .created_at, started_at: .started_at, finished_at: .finished_at, duration: .duration, queued_duration: .queued_duration, user: .user.name, commit: {id: .commit.id[0:8], message: .commit.message | split("\n")[0]}, runner: .runner.description, failure_reason: .failure_reason, web_url: .web_url}'
+
+  project_commits:
+    type: "list"
+    description: "List commits in a project"
+    endpoint: "/projects/{project_id}/repository/commits"
+    method: "GET"
+    query_params:
+      ref_name: "{ref_name}"
+      since: "{since}"
+      until: "{until}"
+      path: "{path}"
+      author: "{author}"
+      all: "{all}"
+      with_stats: "{with_stats}"
+      first_parent: "{first_parent}"
+      order: "{order}"
+      per_page: "{per_page}"
+      page: "{page}"
+    parameters:
+      - name: "project_id"
+        type: "string"
+        required: true
+        description: "Project ID or URL-encoded path"
+      - name: "ref_name"
+        type: "string"
+        required: false
+        description: "Branch or tag name (default: default branch)"
+      - name: "since"
+        type: "string"
+        required: false
+        description: "ISO 8601 timestamp"
+      - name: "until"
+        type: "string"
+        required: false
+        description: "ISO 8601 timestamp"
+      - name: "path"
+        type: "string"
+        required: false
+        description: "File path to filter commits"
+      - name: "author"
+        type: "string"
+        required: false
+        description: "Author name or email"
+      - name: "all"
+        type: "string"
+        enum: ["true", "false"]
+        default: "false"
+        description: "Include commits from all branches"
+      - name: "with_stats"
+        type: "string"
+        enum: ["true", "false"]
+        default: "true"
+        description: "Include commit statistics"
+      - name: "first_parent"
+        type: "string"
+        enum: ["true", "false"]
+        default: "false"
+        description: "Follow only first parent commits"
+      - name: "order"
+        type: "string"
+        enum: ["default", "topo"]
+        default: "default"
+        description: "Commit order"
+      - name: "per_page"
+        type: "integer"
+        default: 30
+        min_value: 1
+        max_value: 100
+        description: "Results per page"
+      - name: "page"
+        type: "integer"
+        default: 1
+        description: "Page number"
+    transform:
+      type: "jq"
+      expression: '.[] | {id: .id[0:8], short_id: .short_id, title: .title, message: .message | split("\n")[0], author_name: .author_name, author_email: .author_email, authored_date: .authored_date, committer_name: .committer_name, committer_email: .committer_email, committed_date: .committed_date, created_at: .created_at, parent_ids: .parent_ids, stats: .stats, status: .status, last_pipeline: .last_pipeline, web_url: .web_url}'
+
+  project_contributors:
+    type: "list"
+    description: "List project contributors"
+    endpoint: "/projects/{project_id}/repository/contributors"
+    method: "GET"
+    query_params:
+      order_by: "{order_by}"
+      sort: "{sort}"
+      per_page: "{per_page}"
+      page: "{page}"
+    parameters:
+      - name: "project_id"
+        type: "string"
+        required: true
+        description: "Project ID or URL-encoded path"
+      - name: "order_by"
+        type: "string"
+        enum: ["name", "email", "commits"]
+        default: "commits"
+        description: "Order contributors by field"
+      - name: "sort"
+        type: "string"
+        enum: ["asc", "desc"]
+        default: "desc"
+        description: "Sort direction"
+      - name: "per_page"
+        type: "integer"
+        default: 30
+        min_value: 1
+        max_value: 100
+        description: "Results per page"
+      - name: "page"
+        type: "integer"
+        default: 1
+        description: "Page number"
+    transform:
+      type: "jq"
+      expression: '.[] | {name: .name, email: .email, commits: .commits, additions: .additions, deletions: .deletions}'
+
+  project_releases:
+    type: "list"
+    description: "List project releases"
+    endpoint: "/projects/{project_id}/releases"
+    method: "GET"
+    query_params:
+      order_by: "{order_by}"
+      sort: "{sort}"
+      include_html_description: "{include_html_description}"
+      per_page: "{per_page}"
+      page: "{page}"
+    parameters:
+      - name: "project_id"
+        type: "string"
+        required: true
+        description: "Project ID or URL-encoded path"
+      - name: "order_by"
+        type: "string"
+        enum: ["created_at", "released_at"]
+        default: "created_at"
+        description: "Order releases by field"
+      - name: "sort"
+        type: "string"
+        enum: ["asc", "desc"]
+        default: "desc"
+        description: "Sort direction"
+      - name: "include_html_description"
+        type: "string"
+        enum: ["true", "false"]
+        default: "false"
+        description: "Include HTML description"
+      - name: "per_page"
+        type: "integer"
+        default: 30
+        min_value: 1
+        max_value: 100
+        description: "Results per page"
+      - name: "page"
+        type: "integer"
+        default: 1
+        description: "Page number"
+    transform:
+      type: "jq"
+      expression: '.[] | {name: .name, tag_name: .tag_name, description: (.description // "")[0:500], released_at: .released_at, created_at: .created_at, author: .author.name, commit: {id: .commit.id[0:8], title: .commit.title}, upcoming_release: .upcoming_release, milestones: [.milestones[].title], evidence_sha: .evidences[0].sha, links: {self: ._links.self}, assets: {count: (.assets.count // 0), sources: [.assets.sources[].url]}}'
+
+  project_environments:
+    type: "list"
+    description: "List project environments"
+    endpoint: "/projects/{project_id}/environments"
+    method: "GET"
+    query_params:
+      name: "{name}"
+      search: "{search}"
+      states: "{states}"
+      per_page: "{per_page}"
+      page: "{page}"
+    parameters:
+      - name: "project_id"
+        type: "string"
+        required: true
+        description: "Project ID or URL-encoded path"
+      - name: "name"
+        type: "string"
+        required: false
+        description: "Environment name"
+      - name: "search"
+        type: "string"
+        required: false
+        description: "Search environments by name"
+      - name: "states"
+        type: "string"
+        required: false
+        description: "Comma-separated list of states (available, stopped)"
+      - name: "per_page"
+        type: "integer"
+        default: 30
+        min_value: 1
+        max_value: 100
+        description: "Results per page"
+      - name: "page"
+        type: "integer"
+        default: 1
+        description: "Page number"
+    transform:
+      type: "jq"
+      expression: '.[] | {id: .id, name: .name, slug: .slug, external_url: .external_url, state: .state, created_at: .created_at, updated_at: .updated_at, last_deployment: .last_deployment}'
+
+  group_projects:
+    type: "list"
+    description: "List projects in a group"
+    endpoint: "/groups/{group_id}/projects"
+    method: "GET"
+    query_params:
+      archived: "{archived}"
+      visibility: "{visibility}"
+      order_by: "{order_by}"
+      sort: "{sort}"
+      search: "{search}"
+      simple: "true"
+      owned: "{owned}"
+      starred: "{starred}"
+      with_custom_attributes: "{with_custom_attributes}"
+      include_subgroups: "{include_subgroups}"
+      per_page: "{per_page}"
+      page: "{page}"
+    parameters:
+      - name: "group_id"
+        type: "string"
+        required: true
+        description: "Group ID or URL-encoded path"
+      - name: "archived"
+        type: "string"
+        enum: ["true", "false"]
+        required: false
+        description: "Filter archived projects"
+      - name: "visibility"
+        type: "string"
+        enum: ["private", "internal", "public"]
+        required: false
+        description: "Filter by project visibility"
+      - name: "order_by"
+        type: "string"
+        enum: ["id", "name", "path", "created_at", "updated_at", "last_activity_at"]
+        default: "created_at"
+        description: "Order projects by field"
+      - name: "sort"
+        type: "string"
+        enum: ["asc", "desc"]
+        default: "desc"
+        description: "Sort direction"
+      - name: "search"
+        type: "string"
+        required: false
+        description: "Search projects by name"
+      - name: "owned"
+        type: "string"
+        enum: ["true", "false"]
+        required: false
+        description: "Filter owned projects only"
+      - name: "starred"
+        type: "string"
+        enum: ["true", "false"]
+        required: false
+        description: "Filter starred projects only"
+      - name: "with_custom_attributes"
+        type: "string"
+        enum: ["true", "false"]
+        default: "false"
+        description: "Include custom attributes"
+      - name: "include_subgroups"
+        type: "string"
+        enum: ["true", "false"]
+        default: "false"
+        description: "Include projects from subgroups"
+      - name: "per_page"
+        type: "integer"
+        default: 30
+        min_value: 1
+        max_value: 100
+        description: "Results per page"
+      - name: "page"
+        type: "integer"
+        default: 1
+        description: "Page number"
+    transform:
+      type: "jq"
+      expression: '.[] | {id: .id, name: .name, path: .path, visibility: .visibility, description: .description, stars: .star_count, forks: .forks_count, issues_enabled: .issues_enabled, merge_requests_enabled: .merge_requests_enabled, last_activity: .last_activity_at, created_at: .created_at, web_url: .web_url, archived: .archived}'
+
+prompts:
+  project_health_analysis:
+    description: "Comprehensive GitLab project health and development analysis"
+    template: |
+      Perform a comprehensive analysis of the GitLab project:
+      
+      ## Project Overview
+      1. Get basic project information: project_details
+      2. Analyze project activity: project_commits (last 30 days)
+      3. Check contributor activity: project_contributors
+      
+      ## Development Activity
+      4. Review open issues: list_issues (state=opened)
+      5. Check merge request status: list_merge_requests (state=opened)
+      6. Examine recent releases: project_releases
+      
+      ## CI/CD Pipeline Health
+      7. Check pipeline status: pipeline_status (last 50 pipelines)
+      8. Analyze pipeline success rates and failure patterns
+      9. Review deployment environments: project_environments
+      
+      ## Development Velocity Analysis
+      10. Track commit frequency and patterns
+      11. Measure merge request cycle time
+      12. Monitor issue resolution rates
+      13. Assess CI/CD pipeline performance
+      
+      Focus on identifying:
+      - Project health indicators and trends
+      - Development velocity and bottlenecks
+      - CI/CD pipeline reliability and performance
+      - Team collaboration patterns
+      - Code quality and maintenance status
+      - Security and compliance considerations
+      
+      Provide actionable insights for:
+      - Development workflow optimization
+      - Pipeline reliability improvement
+      - Team productivity enhancement
+      - Risk assessment and mitigation
+      - Resource allocation optimization
+    suggested_tools: ["project_details", "project_commits", "list_issues", "list_merge_requests", "pipeline_status"]
+
+  cicd_monitoring:
+    description: "Monitor and analyze GitLab CI/CD pipeline performance"
+    template: |
+      Monitor and analyze GitLab CI/CD pipelines for performance and reliability:
+      
+      ## Pipeline Performance Analysis
+      1. Review recent pipeline runs: pipeline_status
+      2. Analyze pipeline job details: pipeline_jobs
+      3. Check deployment environments: project_environments
+      4. Monitor pipeline success/failure rates
+      
+      ## Performance Metrics
+      5. Track pipeline duration trends
+      6. Monitor job failure patterns
+      7. Analyze deployment frequency
+      8. Review environment stability
+      
+      ## Quality Indicators
+      9. Check pipeline YAML errors
+      10. Monitor coverage trends
+      11. Track deployment success rates
+      12. Analyze rollback frequency
+      
+      Focus on metrics:
+      - Pipeline success rate and reliability
+      - Average pipeline duration
+      - Job failure patterns and causes
+      - Deployment frequency and success rate
+      - Environment health and uptime
+      - Test coverage and quality gates
+      
+      Provide insights for:
+      - Pipeline optimization opportunities
+      - Failure pattern analysis and prevention
+      - Deployment reliability improvement
+      - Resource utilization optimization
+      - Quality gate effectiveness
+      - DevOps maturity assessment
+    suggested_tools: ["pipeline_status", "pipeline_jobs", "project_environments"]
+
+resources:
+  gitlab_api_docs:
+    type: "documentation"
+    url: "https://docs.gitlab.com/ee/api/"
+    description: "GitLab REST API official documentation"
+
+  gitlab_ci_docs:
+    type: "guide"
+    url: "https://docs.gitlab.com/ee/ci/"
+    description: "GitLab CI/CD documentation and best practices"
+
+  gitlab_webhooks:
+    type: "guide"
+    url: "https://docs.gitlab.com/ee/user/project/integrations/webhooks.html"
+    description: "GitLab webhooks for real-time integration"
+
+  gitlab_runner_docs:
+    type: "guide"
+    url: "https://docs.gitlab.com/runner/"
+    description: "GitLab Runner installation and configuration"
+
+error_mapping:
+  "401": "Authentication failed - check GitLab token permissions"
+  "403": "Access forbidden - insufficient permissions for this resource"
+  "404": "Project, group, or resource not found"
+  "422": "Unprocessable entity - check parameter values"
+  "429": "Rate limit exceeded - reduce request frequency"

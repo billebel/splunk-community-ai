@@ -1,0 +1,49 @@
+# Environment variables - NEVER commit real credentials!
+.env
+.env.local
+.env.production
+.env.staging
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+build/
+dist/
+.mypy_cache/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+
+# Docker
+.dockerignore
+
+# Logs
+logs/
+*.log
+
+# Development data
+splunk-data/
+tmp/

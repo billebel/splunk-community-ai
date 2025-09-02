@@ -6,7 +6,9 @@ Transform your business systems into AI-accessible tools in minutes. Catalyst pr
 
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://hub.docker.com)
 [![MCP Protocol](https://img.shields.io/badge/MCP-Compatible-green)](https://modelcontextprotocol.io)
+[![Pack Builder](https://img.shields.io/pypi/v/catalyst-builder?label=Pack%20Builder)](https://pypi.org/project/catalyst-builder/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Stars](https://img.shields.io/github/stars/billebel/catalyst_mcp?style=social)](https://github.com/billebel/catalyst_mcp)
 
 ## What is Catalyst?
 

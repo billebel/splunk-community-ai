@@ -2,7 +2,7 @@
 
 ## Overview
 
-Universal Knowledge Packs are YAML-based configurations that define domain-specific tools, prompts, and resources for the Catalyst MCP server. They enable rapid creation of sellable, specialized tool collections.
+Knowledge Packs are YAML-based configurations that define tools, prompts, and resources for the Catalyst MCP server.
 
 ## Pack Structure
 

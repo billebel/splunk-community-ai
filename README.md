@@ -1,8 +1,6 @@
 # Catalyst MCP Server
 
-**Enterprise-grade MCP server that connects AI assistants to any business system through Knowledge Packs.**
-
-Transform your business systems into AI-accessible tools in minutes. Catalyst provides a production-ready MCP (Model Context Protocol) server with web chat interface and Docker deployment.
+MCP (Model Context Protocol) server implementation that loads and serves Knowledge Packs.
 
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://hub.docker.com)
 [![MCP Protocol](https://img.shields.io/badge/MCP-Compatible-green)](https://modelcontextprotocol.io)
@@ -10,18 +8,14 @@ Transform your business systems into AI-accessible tools in minutes. Catalyst pr
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Stars](https://img.shields.io/github/stars/billebel/catalyst_mcp?style=social)](https://github.com/billebel/catalyst_mcp)
 
-## What is Catalyst?
+## Features
 
-**Catalyst** is a complete MCP server solution that connects AI assistants (Claude Desktop, ChatGPT, LibreChat) to your business systems through configurable "Knowledge Packs."
-
-### Key Features
-
-- 🚀 **Production-Ready MCP Server** - Robust, scalable server implementation
-- 💬 **Built-in Chat Interface** - LibreChat integration for instant AI conversations  
-- 🐳 **Docker Deployment** - One-command deployment with Docker Compose
-- 🔧 **Knowledge Packs** - Modular integrations for databases, APIs, and services
-- 🔒 **Enterprise Security** - Authentication, rate limiting, audit logging
-- 📊 **Multi-Model Support** - Claude, GPT, Gemini models out of the box
+- MCP server implementation with FastAPI
+- LibreChat integration for web interface  
+- Docker deployment support
+- Knowledge Pack loading from YAML configurations
+- Authentication and rate limiting
+- Support for multiple AI models (Claude, GPT, Gemini)
 
 ## Quick Start
 
@@ -280,7 +274,7 @@ catalyst-packs create support-tools --type rest --description "Help desk integra
 
 ## License
 
-MIT License - Build commercial products, contribute back to the community.
+MIT License
 
 ---
 
@@ -301,11 +295,9 @@ pip install catalyst-builder
 catalyst-packs create my-integration --type rest
 ```
 
-**Ready to connect AI to your business?**
+## Getting Started
 
-1. **Get the MCP Server**: `git clone https://github.com/billebel/catalyst_mcp.git`
-2. **Install Pack Builder**: `pip install catalyst-builder`
-3. **Create Your Packs**: `catalyst-packs create my-system --type rest`
-4. **Deploy Everything**: `docker-compose up -d`
-
-*Transform any business system into an AI-accessible tool in minutes.*
+1. Clone repository: `git clone https://github.com/billebel/catalyst_mcp.git`
+2. Install pack builder: `pip install catalyst-builder`
+3. Create packs as needed
+4. Deploy with Docker: `docker-compose up -d`

@@ -1,6 +1,6 @@
 # Catalyst MCP Server Documentation
 
-Complete technical documentation for the Catalyst MCP Server - enterprise-grade MCP implementation with web chat interface.
+Technical documentation for the Catalyst MCP Server implementation.
 
 ## Quick Navigation
 

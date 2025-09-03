@@ -8,8 +8,8 @@ jinja2>=3.1.6
 pyyaml>=6.0.2
 jq>=1.6.0
 
-# Shared schema package (git submodule)
--e ./schemas
+# Catalyst builder package (includes schemas and pack validation)
+catalyst-builder>=1.0.0
 
 # Optional dependencies for different integration types
 # Install only what you need for your specific knowledge packs

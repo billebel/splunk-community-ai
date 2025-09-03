@@ -7,14 +7,12 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy application code and schemas first
+# Copy application code
 COPY catalyst_mcp/ ./catalyst_mcp/
 COPY knowledge-packs/ ./knowledge-packs/
-COPY schemas/ ./schemas/
 COPY setup.py .
-COPY guardrails.yml .
 
-# Copy requirements and install Python dependencies (after schemas are available)
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

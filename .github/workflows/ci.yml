@@ -138,8 +138,8 @@ jobs:
         fi
         
         # Verify no sensitive data in repository
-        ! grep -r "sk-ant-api" . --exclude-dir=.git || (echo "❌ Found API keys in repository!" && exit 1)
-        ! grep -r "AKIA" . --exclude-dir=.git || (echo "❌ Found AWS keys in repository!" && exit 1)
+        ! grep -r "sk-ant-api" . --exclude-dir=.git --exclude-dir=.github || (echo "❌ Found API keys in repository!" && exit 1)
+        ! grep -r "AKIA" . --exclude-dir=.git --exclude-dir=.github || (echo "❌ Found AWS keys in repository!" && exit 1)
         echo "✅ No sensitive data found in repository"
 
   security-scan:

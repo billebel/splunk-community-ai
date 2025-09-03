@@ -25,8 +25,9 @@ jobs:
         
     - name: Install system dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y docker.io docker-compose
+        # Docker is pre-installed on GitHub Actions runners
+        docker --version
+        docker compose version || docker-compose --version
         
     - name: Install Python dependencies
       run: |

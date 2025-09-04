@@ -1,4 +1,4 @@
-# Claude Code Configuration for Splunk Community MCP Pack
+# Claude Code Configuration for Splunk Community AI
 
 ## Mission Statement
 
@@ -6,9 +6,9 @@
 
 ## Project Overview
 
-This is a **security-focused MCP (Model Context Protocol) knowledge pack** for integrating AI assistants with Splunk Enterprise. The pack emphasizes **defensive security practices** and **robust guardrails** to safely enable AI-driven Splunk analysis.
+This is a **community-driven AI platform** built on the MCP (Model Context Protocol) for integrating AI assistants with Splunk Enterprise. The platform emphasizes **defensive security practices** and **robust guardrails** to safely enable AI-driven Splunk analysis.
 
-Built by practitioners with **25+ years of cybersecurity experience**, this pack represents our attempt to **innovate responsibly** - exploring how AI can enhance Splunk analysis while respecting the security and operational realities of production environments. We approach this work with **humility**, knowing that real-world usage will teach us things our testing hasn't revealed.
+Built by practitioners with **25+ years of cybersecurity experience**, this platform represents our attempt to **innovate responsibly** - exploring how AI can enhance Splunk analysis while respecting the security and operational realities of production environments. We approach this work with **humility**, knowing that real-world usage will teach us things our testing hasn't revealed.
 
 ## Key Architecture Components
 

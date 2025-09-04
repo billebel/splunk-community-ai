@@ -1,0 +1,148 @@
+# Data Source Mappings - Tribal Knowledge for Environment
+# Simple lookup table for common terms to environment-specific data sources
+
+authentication:
+  aliases: ["auth", "login", "logon", "signin", "sso", "authentication", "credential", "password"]
+  splunk_sources:
+    - index: "security"
+      sourcetype: "wineventlog"
+      description: "Windows authentication events"
+      common_fields: ["EventCode", "Account_Name", "Logon_Type"]
+      example_searches:
+        - "index=security EventCode=4624 | stats count by Account_Name"
+        - "index=security EventCode=4625 | table _time, Account_Name, Workstation_Name"
+    - index: "linux_auth" 
+      sourcetype: "linux_secure"
+      description: "Linux SSH and authentication logs"
+      common_fields: ["user", "src_ip", "action"]
+      example_searches:
+        - "index=linux_auth failed password | stats count by user"
+        - "index=linux_auth Accepted publickey | table _time, user, src_ip"
+    - index: "web"
+      sourcetype: "access_combined"
+      description: "Web application login events"
+      common_fields: ["clientip", "status", "uri_path"]
+      example_searches:
+        - "index=web uri_path=/login status=401 | stats count by clientip"
+
+network:
+  aliases: ["network", "traffic", "firewall", "connections", "bandwidth", "tcp", "udp", "dns"]
+  splunk_sources:
+    - index: "network"
+      sourcetype: "cisco_asa"
+      description: "Cisco firewall logs"
+      common_fields: ["src_ip", "dest_ip", "dest_port", "action"]
+      example_searches:
+        - "index=network action=denied | stats count by dest_port"
+        - "index=network | iplocation src_ip | stats count by Country"
+    - index: "dns"
+      sourcetype: "bind"
+      description: "DNS query logs"
+      common_fields: ["query", "query_type", "src_ip"]
+      example_searches:
+        - "index=dns query_type=A | stats count by query"
+
+security:
+  aliases: ["security", "threat", "malware", "alerts", "incidents", "threats", "ioc", "indicators"]
+  splunk_sources:
+    - index: "security"
+      sourcetype: "symantec_ep"
+      description: "Antivirus and endpoint protection"
+      common_fields: ["Computer_Name", "Risk_Name", "Action_Taken"]
+      example_searches:
+        - "index=security Risk_Name=* | stats count by Risk_Name"
+    - index: "security"
+      sourcetype: "wineventlog"
+      description: "Windows security events"
+      common_fields: ["EventCode", "Computer", "Message"]
+      example_searches:
+        - "index=security EventCode=4688 | stats count by Process_Name"
+
+web:
+  aliases: ["web", "apache", "nginx", "iis", "http", "https", "website", "webserver"]
+  splunk_sources:
+    - index: "web"
+      sourcetype: "access_combined"
+      description: "Web server access logs"
+      common_fields: ["clientip", "method", "uri_path", "status", "bytes"]
+      example_searches:
+        - "index=web status>=400 | stats count by status, uri_path"
+        - "index=web | stats sum(bytes) by clientip | sort -sum(bytes)"
+    - index: "web"
+      sourcetype: "apache_error"
+      description: "Web server error logs"
+      common_fields: ["log_level", "message", "client_ip"]
+      example_searches:
+        - "index=web log_level=error | stats count by message"
+
+system:
+  aliases: ["system", "syslog", "os", "server", "performance", "cpu", "memory", "disk"]
+  splunk_sources:
+    - index: "os"
+      sourcetype: "linux_syslog"
+      description: "Linux system logs"
+      common_fields: ["host", "facility", "severity", "message"]
+      example_searches:
+        - "index=os severity=error | stats count by host"
+    - index: "perfmon"
+      sourcetype: "perfmon"
+      description: "Windows performance counters"
+      common_fields: ["host", "object", "counter", "value"]
+      example_searches:
+        - "index=perfmon object=\"Processor\" | stats avg(value) by host"
+
+application:
+  aliases: ["application", "app", "java", "tomcat", "database", "sql", "oracle", "mysql"]
+  splunk_sources:
+    - index: "application"
+      sourcetype: "catalina"
+      description: "Tomcat application server logs"
+      common_fields: ["log_level", "thread", "message"]
+      example_searches:
+        - "index=application log_level=ERROR | stats count by thread"
+    - index: "database"
+      sourcetype: "oracle_audit"
+      description: "Oracle database audit logs"
+      common_fields: ["username", "action", "object_name"]
+      example_searches:
+        - "index=database action=LOGON | stats count by username"
+
+database:
+  aliases: ["database", "db", "sql", "mysql", "oracle", "postgres", "mssql", "query"]
+  splunk_sources:
+    - index: "database"
+      sourcetype: "mysql_error"
+      description: "MySQL database error logs" 
+      common_fields: ["log_level", "thread_id", "message"]
+      example_searches:
+        - "index=database log_level=ERROR | stats count by message"
+    - index: "database"
+      sourcetype: "oracle_audit"
+      description: "Oracle database audit and performance"
+      common_fields: ["username", "sql_text", "elapsed_time"]
+      example_searches:
+        - "index=database elapsed_time>1000 | stats count by username"
+
+# Common field mappings across different data sources
+common_field_aliases:
+  user_identification: ["user", "username", "Account_Name", "User_Name", "userid"]
+  source_ip: ["src_ip", "clientip", "source_ip", "remote_addr", "Client_Address"]
+  destination_ip: ["dest_ip", "dst_ip", "destination_ip", "server_ip"]
+  timestamp: ["_time", "timestamp", "event_time", "log_time"]
+  host_identification: ["host", "Computer", "hostname", "server", "Computer_Name"]
+  action_taken: ["action", "Action_Taken", "result", "status", "outcome"]
+
+# Time range suggestions for different data types
+time_range_recommendations:
+  authentication: 
+    default: "-1h"
+    investigation: "-24h"
+    trend_analysis: "-7d"
+  network:
+    default: "-15m" 
+    investigation: "-1h"
+    trend_analysis: "-1d"
+  security:
+    default: "-1h"
+    investigation: "-24h"
+    incident_response: "-7d"

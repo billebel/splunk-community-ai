@@ -1,0 +1,139 @@
+# Guardrails Testing and Management Tools
+
+tools:
+  validate_search_query:
+    type: "execute"
+    display_name: "Test Search Query Safety"
+    description: "⚠️ USE AFTER GUIDED SEARCH: Validate query safety as recommended by search strategy planner."
+    business_purpose: "Prevent dangerous or expensive searches from being executed"
+    key_capabilities:
+      - "Detects dangerous commands like |delete, |script"
+      - "Catches performance killers like wildcard searches"
+      - "Validates time ranges and result limits"
+      - "Shows what modifications would be applied"
+    best_used_for:
+      - "Before executing any search query"
+      - "When constructing complex searches"
+      - "Testing if a user's request is safe"
+    usage_examples:
+      - "test_query: 'index=security | delete' → Will be BLOCKED (dangerous command)"
+      - "test_query: 'search *' → Will get WARNING (performance issue)" 
+      - "test_query: 'index=web status=404' → Will be ALLOWED (safe query)"
+    endpoint: "/services/search/jobs/oneshot"
+    method: "POST"
+    
+    parameters:
+      - name: "test_query"
+        type: "string"
+        required: true
+        description: "The search query to test (SAFE - will NOT be executed, only validated)"
+        examples: ["index=security EventCode=4625", "search * | delete", "index=web earliest=-1h"]
+        
+      - name: "user_role"
+        type: "string"
+        required: false
+        default: "standard_user"
+        enum: ["admin", "power_user", "standard_user", "readonly_user"]
+        description: "Test as this user type (affects what's allowed/blocked)"
+        usage_note: "Different roles have different limits - admin has more permissions"
+        
+      - name: "show_modifications"
+        type: "boolean"
+        required: false
+        default: true
+        description: "Show how the query would be automatically modified (time limits, result limits, etc.)"
+    
+    # Dummy search - validation happens in transform
+    form_data:
+      search: "| makeresults | eval validation_request=\"true\""
+      output_mode: "json"
+      exec_mode: "oneshot"
+    
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    
+    transform:
+      type: "python"
+      file: "transforms/guardrails_test.py"
+      function: "validate_search_query"
+
+  get_guardrails_config:
+    type: "details"
+    display_name: "Get Current Guardrails Configuration"
+    description: "⚠️ ADVANCED TOOL: View guardrails configuration for security analysis and troubleshooting."
+    business_purpose: "Provide visibility into security controls and user permissions"
+    key_capabilities:
+      - "View active security policies"
+      - "Understand role-based limitations"
+      - "Check data masking settings"
+    best_used_for:
+      - "Understanding current security posture"
+      - "Debugging permission issues"
+      - "Compliance reporting and documentation"
+    endpoint: "/services/server/info"
+    method: "GET"
+    
+    parameters:
+      - name: "user_role"
+        type: "string"
+        required: false
+        default: "standard_user"
+        enum: ["admin", "power_user", "standard_user", "readonly_user"]
+        description: "Show limits for specific user role"
+        
+      - name: "include_patterns"
+        type: "boolean"
+        required: false
+        default: false
+        description: "Include security patterns (may be sensitive)"
+    
+    query_params:
+      output_mode: "json"
+    
+    transform:
+      type: "python"
+      file: "transforms/guardrails_test.py"
+      function: "get_guardrails_config"
+
+  test_data_masking:
+    type: "execute" 
+    display_name: "Test Data Masking Rules"
+    description: "Test how data masking would be applied to sample data"
+    business_purpose: "Verify privacy controls and data protection policies"
+    key_capabilities:
+      - "Preview data masking effects"
+      - "Test sensitive field detection"
+      - "Verify privacy compliance"
+    best_used_for:
+      - "Privacy policy testing"
+      - "Data protection verification"
+      - "Compliance validation"
+    endpoint: "/services/search/jobs/oneshot"
+    method: "POST"
+    
+    parameters:
+      - name: "sample_data"
+        type: "string"
+        required: true
+        description: "JSON sample data to test masking on"
+        
+      - name: "user_role"
+        type: "string"
+        required: false
+        default: "standard_user"
+        enum: ["admin", "power_user", "standard_user", "readonly_user"]
+        description: "User role context for masking rules"
+    
+    # Dummy search - masking test happens in transform
+    form_data:
+      search: "| makeresults | eval masking_test=\"true\""
+      output_mode: "json"
+      exec_mode: "oneshot"
+    
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    
+    transform:
+      type: "python"
+      file: "transforms/guardrails_test.py"
+      function: "test_data_masking"

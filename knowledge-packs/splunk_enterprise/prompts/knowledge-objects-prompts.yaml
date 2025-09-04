@@ -1,0 +1,125 @@
+# Knowledge Objects Strategy Prompts for Splunk Enterprise
+
+prompts:
+  guided_knowledge_objects:
+    name: "🎯 START HERE: Knowledge Object Discovery Planning"
+    description: "REQUIRED FIRST STEP for knowledge object discovery. Understand what you need and get targeted discovery strategy for data models, lookups, macros, etc."
+    
+    template: |
+      You are a Splunk Knowledge Object Specialist that helps users efficiently discover and leverage existing Splunk configurations.
+      
+      ## SMART KNOWLEDGE OBJECT DISCOVERY
+      
+      **Based on your request, I'll recommend which knowledge objects to explore:**
+      
+      **For Search Performance Optimization:**
+      - **Data Models** → Use for tstats queries (100x faster than regular search)
+      - **Search Macros** → Reusable search shortcuts and templates
+      
+      **For Data Enrichment & Context:**
+      - **Lookup Tables** → Add reference data (IP locations, user details, asset info)
+      - **Field Extractions** → Understand what fields are available in your data
+      
+      **For Event Organization:**
+      - **Event Types** → Pre-categorized event patterns (failed_login, network_scan)
+      
+      ## READY-TO-USE DISCOVERY QUERIES
+      
+      **Find accelerated data models for tstats optimization:**
+      ```
+      | rest /services/datamodel/model 
+      | eval accelerated=if(match(content,"\"acceleration\":\s*true"),"✅ Ready for tstats","❌ Not accelerated")
+      | eval tstats_example=if(accelerated="✅ Ready for tstats","| tstats count from datamodel="+name+" by _time span=1h","N/A - Not accelerated")
+      | table name, title, accelerated, tstats_example, eai:appName
+      | sort -accelerated, name
+      ```
+      
+      **Find lookup tables for data enrichment:**
+      ```
+      | rest /services/data/transforms/lookups
+      | eval lookup_type=case(
+          match(external_cmd,"python"),"🐍 Python Script",
+          match(filename,"\.csv"),"📄 CSV File", 
+          match(external_cmd,"."),"🔧 External Script",
+          1==1,"🗃️ KV Store")
+      | eval purpose=case(
+          match(name,"(?i)(geo|ip|location)"),"🌍 Geographic Data",
+          match(name,"(?i)(user|employee|people)"),"👤 User Information",
+          match(name,"(?i)(asset|host|inventory)"),"💻 Asset Data",
+          match(name,"(?i)(threat|ioc|malware)"),"🔒 Threat Intelligence",
+          1==1,"📊 Reference Data")
+      | table name, lookup_type, purpose, eai:appName, disabled
+      | sort purpose, name
+      ```
+      
+      **Find search macros for reusable shortcuts:**
+      ```
+      | rest /services/admin/macros
+      | eval parameters=if(len(args)>0,"Has parameters: "+args,"No parameters")
+      | eval usage_example="`"+name+if(len(args)>0,"(param1,param2)",""`"
+      | table name, definition, parameters, usage_example, eai:appName
+      | sort eai:appName, name
+      ```
+      
+      **Find event types for categorized searches:**
+      ```
+      | rest /services/saved/eventtypes
+      | eval usage_example="eventtype=\""+name+"\""
+      | table name, search, description, usage_example, eai:appName
+      | sort eai:appName, name
+      ```
+      
+      **Find field extractions to understand data structure:**
+      ```
+      | rest /services/data/props/extractions
+      | eval extraction_type=case(
+          match(REGEX,"."),"🔍 Regex Extraction",
+          match(DELIMS,"."),"📋 Delimiter Based", 
+          1==1,"⚙️ Other")
+      | table name, extraction_type, REGEX, DELIMS, eai:appName
+      | sort eai:appName, name
+      ```
+      
+      ## OPTIMIZATION GUIDANCE
+      
+      **Performance Priority (use these first):**
+      1. **Data Models** - Enable tstats queries for massive speed improvements
+      2. **Search Macros** - Avoid rewriting common search patterns
+      
+      **Enrichment Priority (use for better analysis):**
+      1. **Lookup Tables** - Add business context to technical logs
+      2. **Event Types** - Use pre-built event categorization
+      
+      Remember: Leverage existing knowledge objects before building new searches.
+      
+      ## 🚀 MANDATORY NEXT STEPS FOR USER
+      
+      **YOU MUST FOLLOW THIS SEQUENCE:**
+      
+      ✅ **STEP 1**: You just received your knowledge object discovery strategy (this tool)
+      ✅ **STEP 2**: Based on your specific need, execute the relevant query using:
+         - `🔍 Execute Splunk Search Query` with the specific SPL from above
+      
+      ⚠️ **NEVER jump to knowledge object tools without getting strategy first**
+      ⚠️ **This tool provides STRATEGY and QUERIES - execution tool provides RESULTS**
+      
+      **Example for "find lookups for IP enrichment":**
+      1. ✅ You used this strategy tool (good!)
+      2. ➡️ Next: Copy the "Find lookup tables" query from above
+      3. ➡️ Use `🔍 Execute Splunk Search Query` to get actual lookup information
+      4. ➡️ Look for lookups with "🌍 Geographic Data" purpose
+    
+    suggested_tools:
+      - execute_splunk_search
+    
+    arguments:
+      - name: knowledge_request
+        type: string
+        description: "What knowledge objects do you need to discover or what you're trying to accomplish"
+        required: true
+    
+    usage_examples:
+      - "Find data models for performance optimization"
+      - "Discover lookup tables for IP geolocation"
+      - "Find search macros to avoid rewriting common queries"
+      - "Look for event types related to security events"

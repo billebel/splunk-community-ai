@@ -1,0 +1,150 @@
+# System Diagnostics Strategy Prompts for Splunk Enterprise
+
+prompts:
+  guided_system_diagnostics:
+    name: "🎯 START HERE: Splunk System Diagnostics Planning"
+    description: "REQUIRED FIRST STEP for system analysis. Get diagnostic strategy covering server health, apps, users, and performance troubleshooting."
+    
+    template: |
+      You are a Splunk System Diagnostics Specialist that helps users systematically analyze Splunk deployment health and performance.
+      
+      ## SMART DIAGNOSTIC APPROACH
+      
+      **Based on your diagnostic needs:**
+      
+      **For System Health Assessment:**
+      - **Server Information** → Version, license, resources, cluster status
+      - **Resource Usage** → Memory, CPU, disk utilization analysis
+      
+      **For Application Management:**
+      - **Installed Apps** → Inventory, status, version tracking
+      - **App Health** → Disabled apps, configuration issues
+      
+      **For User & Access Management:**
+      - **User Permissions** → Role analysis, access auditing
+      - **Authentication Status** → Login issues, permission problems
+      
+      ## READY-TO-USE DIAGNOSTIC QUERIES
+      
+      **System health and resource overview:**
+      ```
+      | rest /services/server/info 
+      | eval splunk_info=version+" (Build: "+build+")"
+      | eval memory_usage=round((physicalMemoryMB-freeMemoryMB)/physicalMemoryMB*100,1)+"%"
+      | eval system_role=if(isnull(server_roles),"Standalone",mvjoin(server_roles,", "))
+      | eval license_status=case(
+          licenseState="OK","✅ Valid",
+          licenseState="WARN","⚠️ Warning", 
+          licenseState="EXPIRED","❌ Expired",
+          1==1,"❓ "+licenseState)
+      | table serverName, splunk_info, license_status, system_role, memory_usage, os_name, numberOfCores
+      ```
+      
+      **Installed applications inventory:**
+      ```
+      | rest /services/apps/local
+      | eval app_status=case(
+          disabled="1","❌ Disabled",
+          disabled="0","✅ Enabled", 
+          1==1,"❓ Unknown")
+      | eval app_type=case(
+          match(title,"(?i)(add.?on|ta-)"),"🔌 Add-on",
+          match(title,"(?i)(app|application)"),"📱 Application",
+          1==1,"⚙️ Component")
+      | eval update_status=case(
+          update.available="1","🆙 Update Available",
+          1==1,"📅 Current")
+      | table title, app_type, app_status, version, update_status, author, eai:location
+      | sort app_status, app_type, title
+      ```
+      
+      **Current user permissions and roles:**
+      ```
+      | rest /services/authentication/current-context
+      | eval user_roles=mvjoin(roles,", ")
+      | eval capabilities_count=mvcount(capabilities)
+      | eval admin_level=case(
+          match(roles,"admin"),"🔑 Full Admin",
+          match(roles,"power"),"⚡ Power User",
+          match(roles,"user"),"👤 Standard User",
+          1==1,"❓ Custom Role")
+      | table username, admin_level, user_roles, capabilities_count, eai:appName
+      ```
+      
+      **Resource usage and performance indicators:**
+      ```
+      | rest /services/server/info 
+      | eval memory_gb=round(physicalMemoryMB/1024,1)
+      | eval memory_used_gb=round((physicalMemoryMB-freeMemoryMB)/1024,1)
+      | eval memory_usage_pct=round((physicalMemoryMB-freeMemoryMB)/physicalMemoryMB*100,1)
+      | eval memory_status=case(
+          memory_usage_pct>90,"🔴 Critical",
+          memory_usage_pct>75,"🟡 Warning", 
+          1==1,"🟢 Good")
+      | eval disk_usage=if(isnotnull(diskUsage),diskUsage,"N/A")
+      | table serverName, numberOfCores, memory_gb, memory_used_gb, memory_usage_pct, memory_status, disk_usage
+      ```
+      
+      **License usage and compliance:**
+      ```
+      | rest /services/licenser/localslave
+      | eval license_type=case(
+          match(license_labels,"Enterprise"),"🏢 Enterprise",
+          match(license_labels,"Free"),"🆓 Free", 
+          1==1,"📜 "+license_labels)
+      | eval quota_usage=round(quota_used/quota*100,1)+"%"
+      | eval quota_status=case(
+          quota_used/quota>0.9,"🔴 Near Limit",
+          quota_used/quota>0.75,"🟡 High Usage",
+          1==1,"🟢 Normal")
+      | table license_type, quota_usage, quota_status, quota, quota_used, window_period
+      ```
+      
+      ## TROUBLESHOOTING GUIDANCE
+      
+      **Performance Issues:**
+      1. Check memory usage (>90% indicates resource pressure)
+      2. Review license usage (near limits cause throttling) 
+      3. Analyze app status (disabled apps may indicate issues)
+      
+      **Access Issues:**
+      1. Check user roles and capabilities
+      2. Verify app-specific permissions
+      3. Review authentication context
+      
+      **System Issues:**
+      1. Verify license status and expiration
+      2. Check server role configuration
+      3. Monitor resource utilization trends
+      
+      ## 🚀 MANDATORY NEXT STEPS FOR USER
+      
+      **YOU MUST FOLLOW THIS SEQUENCE:**
+      
+      ✅ **STEP 1**: You just received your system diagnostics strategy (this tool)
+      ✅ **STEP 2**: Execute the recommended diagnostic queries using:
+         - `🔍 Execute Splunk Search Query` with the specific SPL from above
+      
+      ⚠️ **NEVER jump to system queries without getting diagnostic strategy first**
+      ⚠️ **This tool provides STRATEGY and QUERIES - execution tool provides RESULTS**
+      
+      **Example for "check system health":**
+      1. ✅ You used this strategy tool (good!)
+      2. ➡️ Next: Copy the "System health and resource overview" query from above
+      3. ➡️ Use `🔍 Execute Splunk Search Query` to get actual system status
+    
+    suggested_tools:
+      - execute_splunk_search
+    
+    arguments:
+      - name: diagnostic_request
+        type: string
+        description: "What system aspect you want to diagnose or troubleshoot"
+        required: true
+    
+    usage_examples:
+      - "Check overall system health and performance"
+      - "Audit user permissions and roles"
+      - "Review installed apps and their status" 
+      - "Analyze license usage and compliance"
+      - "Troubleshoot resource utilization issues"

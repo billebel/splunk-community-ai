@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\prompts/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\tools/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\prompts/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\prompts/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\prompts/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\tests/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\tests/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\tests/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\tools/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\tools/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\transforms/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\transforms/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\transforms/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\transforms/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\transforms/**)",
+      "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\tests/**)",
+      "Bash(python -m pytest test_guardrails_security.py -k \"masking\" -xvs)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

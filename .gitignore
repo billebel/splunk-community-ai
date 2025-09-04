@@ -1,49 +1,271 @@
-# Environment variables - NEVER commit real credentials!
+# =============================================================================
+# SECURITY - NEVER COMMIT CREDENTIALS OR SENSITIVE DATA!
+# =============================================================================
+
+# Environment variables - contains API keys and passwords
 .env
 .env.local
 .env.production
 .env.staging
+.env.*.local
 
-# Python
+# Backup copies of environment files
+.env.backup
+.env.bak
+*.env.backup
+
+# Any files with credentials in the name
+*credentials*
+*secrets*
+*keys*
+*tokens*
+
+# =============================================================================
+# PYTHON
+# =============================================================================
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
 *.pyc
 *.pyo
 *.pyd
 .Python
 *.so
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
 .venv/
 venv/
 ENV/
 env/
-*.egg-info/
-build/
-dist/
-.mypy_cache/
+.env/
+env.bak/
+venv.bak/
 
-# IDE files
+# Testing and coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Jupyter notebooks
+.ipynb_checkpoints
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+
+# =============================================================================
+# DOCKER & CONTAINERS
+# =============================================================================
+
+# Docker override files
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.*.local.yml
+
+# Docker volumes and data
+volumes/
+docker-data/
+splunk-data/
+postgres-data/
+mongodb-data/
+
+# Container logs
+logs/
+*.log
+*.log.*
+
+# =============================================================================
+# IDE & EDITORS
+# =============================================================================
+
+# VS Code
 .vscode/
+*.code-workspace
+
+# IntelliJ / PyCharm
 .idea/
+*.iws
+*.iml
+*.ipr
+
+# Vim
 *.swp
 *.swo
 *~
+.netrwhist
 
-# OS files
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# =============================================================================
+# OPERATING SYSTEM
+# =============================================================================
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
 Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# DEVELOPMENT & TESTING
+# =============================================================================
+
+# Temporary files
+tmp/
+temp/
 *.tmp
 *.temp
+*.bak
+*.backup
 
-# Docker
-.dockerignore
+# Debug and test files
+debug*.py
+test_debug*.py
+*_debug*
+*.debug
 
-# Logs
-logs/
-*.log
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
 
-# Development data
-splunk-data/
-tmp/
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Node modules (if using any Node tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =============================================================================
+# MCP & SPLUNK SPECIFIC
+# =============================================================================
+
+# MCP client configurations with sensitive data
+mcp-config.json
+client-config.json
+
+# Splunk data exports (may contain sensitive information)
+exports/
+*.csv
+*.json.export
+*.xml.export
+
+# Pack development artifacts
+*.pack
+pack-build/
+
+# Claude Desktop config backups (may contain server URLs)
+claude-desktop-config.*.json
+
+# Local pack configurations
+local-pack-config.yaml
+local-pack-config.yml
+
+# Audit logs (may contain sensitive queries/data)
+audit/
+audit-logs/
+*.audit
+
+# =============================================================================
+# GENERATED FILES
+# =============================================================================
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Generated documentation
+docs/_build/
+docs/build/
+site/
+
+# Coverage reports
+.coverage
+coverage.xml
+*.cover
+.hypothesis/
+
+# =============================================================================
+# DEVELOPMENT TOOLS
+# =============================================================================
+
+# Profiling data
+.prof
+
+# Memory dumps
+*.dmp
+
+# Core dumps (in case of crashes)
+core
+
+# Editor-specific files
+.editorconfig.local

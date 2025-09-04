@@ -1,0 +1,195 @@
+# Data Discovery Tools - Help LLM understand available data sources
+
+tools:
+  list_indexes:
+    type: "list"
+    display_name: "📊 Discover Available Data Indexes"  
+    description: "⚠️ USE AFTER GUIDED SEARCH: Discovery tool recommended by strategy planner. See what data repositories exist in your Splunk environment."
+    business_purpose: "Show LLM what data repositories exist before building searches"
+    key_capabilities:
+      - "List all data indexes (security, web, network, etc.)"
+      - "Show index sizes and event counts"
+      - "Filter out internal system indexes"
+    best_used_for:
+      - "First step: see what data is available"
+      - "When user asks 'what data do we have?'"
+      - "Before building searches, check if relevant indexes exist"
+    usage_examples:
+      - "User asks about security logs → First check if 'security' index exists"
+      - "User wants web analytics → Look for 'web', 'apache', 'nginx' indexes"
+    endpoint: "/services/data/indexes"
+    method: "GET"
+    
+    parameters:
+      - name: "include_internal"
+        type: "boolean"
+        required: false
+        default: false
+        description: "Include system indexes like _audit, _internal (usually not needed for user searches)"
+        usage_note: "Set to true only if you need system/internal logs for troubleshooting"
+    
+    query_params:
+      output_mode: "json"
+      count: 0
+    
+    transform:
+      type: "python"
+      file: "transforms/discovery.py"
+      function: "extract_indexes"
+
+  get_sourcetypes:
+    type: "search"
+    display_name: "List Data Types in Index"
+    description: "See what types of data (sourcetypes) are in a specific index - helps you target searches better"
+    business_purpose: "Show what data formats exist in an index so LLM can build more specific searches"
+    key_capabilities:
+      - "List all data types in an index (e.g., 'apache_access', 'windows_logs')"
+      - "See what formats and sources are available"
+      - "Help target searches to specific data types"
+    best_used_for:
+      - "After finding an index, see what data types it contains"
+      - "When you need to target specific log formats"
+      - "To build more precise searches"
+    usage_examples:
+      - "Found 'web' index → get_sourcetypes to see apache_access, nginx_logs, etc."
+      - "User wants Windows events → check security index for wineventlog sourcetype"
+    endpoint: "/services/search/jobs/oneshot"
+    method: "POST"
+    
+    parameters:
+      - name: "index_name"
+        type: "string"
+        required: false
+        default: "_internal"
+        description: "Which index to examine (e.g., 'security', 'web', 'network') - defaults to _internal for testing"
+        examples: ["security", "web", "network", "main", "_internal"]
+        
+      - name: "max_sourcetypes"
+        type: "integer"
+        required: false
+        default: 50
+        min_value: 1
+        max_value: 200
+        description: "How many data types to show (usually 50 is plenty)"
+    
+    form_data:
+      search: "| metadata type=sourcetypes index={index_name} | stats count by sourcetype | sort -count | head {max_sourcetypes}"
+      output_mode: "json"
+      exec_mode: "oneshot"
+      earliest_time: "-7d"
+      latest_time: "now"
+    
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    
+    transform:
+      type: "python"
+      file: "transforms/search.py"
+      function: "extract_search_results"
+
+  get_hosts:
+    type: "search"
+    display_name: "Discover Hosts in Environment"
+    description: "List hosts/systems generating data in Splunk environment"
+    business_purpose: "Identify systems and hosts for targeted analysis and troubleshooting"
+    key_capabilities:
+      - "Enumerate active hosts across the environment"
+      - "Understand system topology and data sources"
+      - "Enable host-specific analysis and filtering"
+    best_used_for:
+      - "System-specific troubleshooting and analysis"
+      - "Understanding environment topology"
+      - "Targeted host-based searches"
+    endpoint: "/services/search/jobs/oneshot"
+    method: "POST"
+    
+    parameters:
+      - name: "index_filter"
+        type: "string"
+        required: false
+        default: "_internal"
+        description: "Limit to specific index (defaults to _internal)"
+        examples: ["security", "web", "network", "main", "_internal"]
+        
+      - name: "time_range"
+        type: "string"
+        required: false
+        default: "-24h"
+        description: "Time range for host discovery"
+        
+      - name: "max_hosts"
+        type: "integer"
+        required: false
+        default: 100
+        description: "Maximum hosts to return"
+    
+    form_data:
+      search: "| metadata type=hosts index={index_filter} | stats count by host | sort -count | head {max_hosts}"
+      output_mode: "json"
+      exec_mode: "oneshot"
+      earliest_time: "-7d"
+      latest_time: "now"
+    
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    
+    transform:
+      type: "python"
+      file: "transforms/search.py"
+      function: "extract_search_results"
+
+  find_data_sources:
+    type: "execute"
+    display_name: "🎯 Get Ready-to-Use Search Patterns"
+    description: "⚠️ USE AFTER GUIDED SEARCH: Quick patterns recommended by strategy planner. Get pre-built search examples for common requests."
+    business_purpose: "Translate user requests into specific Splunk search components with examples"
+    key_capabilities:
+      - "Convert 'show me login failures' → 'index=security EventCode=4625'"
+      - "Get example searches for common use cases"
+      - "Find the right data sources for user requests"
+    best_used_for:
+      - "User asks about 'authentication' or 'login logs'"
+      - "User wants 'network traffic' or 'firewall logs'"
+      - "User requests 'web logs' or 'database errors'"
+      - "Any time you need to translate business terms to Splunk terms"
+    usage_examples:
+      - "User: 'show failed logins' → search_term: 'authentication' → get index=security EventCode=4625"
+      - "User: 'web server errors' → search_term: 'web' → get index=web sourcetype=apache_error"
+      - "User: 'network traffic' → category: 'network' → get firewall and DNS data sources"
+    
+    parameters:
+      - name: "search_term"
+        type: "string"
+        required: false
+        description: "What type of data to find - use common terms like 'login', 'web', 'firewall', 'database'"
+        examples: ["authentication", "login", "firewall", "web logs", "database", "network traffic"]
+        usage_tips: "Try terms the user would naturally use - this translates them to Splunk specifics"
+        
+      - name: "category"
+        type: "string"
+        required: false
+        enum: ["authentication", "network", "security", "web", "system", "application", "database"]
+        description: "Get all data sources for a specific category (alternative to search_term)"
+        usage_note: "Use this when you want all sources for a broad category like 'security'"
+    
+    response_format_example: |
+      Returns data like:
+      {
+        "matching_categories": {
+          "authentication": {
+            "splunk_sources": [
+              {
+                "index": "security",
+                "sourcetype": "wineventlog",
+                "example_searches": ["index=security EventCode=4625 | table _time, Account_Name"]
+              }
+            ]
+          }
+        }
+      }
+    
+    transform:
+      type: "python"
+      file: "transforms/discovery.py"
+      function: "find_data_sources"
+

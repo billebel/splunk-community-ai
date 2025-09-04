@@ -1,0 +1,84 @@
+# System Information Tools - Splunk deployment status and health
+
+tools:
+  get_server_info:
+    type: "details"
+    display_name: "Check Splunk System Status"
+    description: "⚠️ USE AFTER SYSTEM DIAGNOSTICS STRATEGY: Get server info as recommended by diagnostic planner."
+    business_purpose: "Show LLM the Splunk environment details for context"
+    key_capabilities:
+      - "Show Splunk version and build"
+      - "Check license status and usage"
+      - "Display basic system health info"
+    best_used_for:
+      - "When troubleshooting system issues"
+      - "To understand the Splunk environment"
+      - "Checking system capacity and license limits"
+    usage_examples:
+      - "User reports slow searches → check server info for resource usage"
+      - "User asks about features → check version to see what's available"
+    endpoint: "/services/server/info"
+    method: "GET"
+    
+    query_params:
+      output_mode: "json"
+    
+    transform:
+      type: "python"
+      file: "transforms/system.py"
+      function: "extract_server_info"
+
+  get_splunk_apps:
+    type: "list"
+    display_name: "Show Installed Apps and Add-ons"
+    description: "⚠️ USE AFTER SYSTEM DIAGNOSTICS STRATEGY: List apps and add-ons as recommended by diagnostic planner."
+    business_purpose: "Show LLM what specialized tools and data sources are installed"
+    key_capabilities:
+      - "List apps like 'Splunk Security Essentials', 'DB Connect', 'AWS Add-on'"
+      - "Show app status (enabled/disabled)"
+      - "Identify specialized functionality available"
+    best_used_for:
+      - "When user asks about specific technology integrations"
+      - "To see what specialized searches/dashboards are available"
+      - "Understanding what data sources are configured"
+    usage_examples:
+      - "User asks about AWS data → check if 'Splunk Add-on for AWS' is installed"
+      - "Need database queries → look for 'DB Connect' app"
+    endpoint: "/services/apps/local"
+    method: "GET"
+    
+    query_params:
+      output_mode: "json"
+      count: 0
+    
+    transform:
+      type: "python"
+      file: "transforms/system.py"
+      function: "extract_apps"
+
+  get_user_info:
+    type: "details"
+    display_name: "Check Current User Permissions"
+    description: "⚠️ USE AFTER SYSTEM DIAGNOSTICS STRATEGY: Check user permissions as recommended by diagnostic planner."
+    business_purpose: "Help LLM understand what the user can/cannot do to provide appropriate recommendations"
+    key_capabilities:
+      - "Show user roles (admin, power_user, user, etc.)"
+      - "Display access permissions and restrictions"
+      - "Identify what indexes/apps the user can access"
+    best_used_for:
+      - "When user gets 'permission denied' errors"
+      - "To understand what searches the user can run"
+      - "Providing role-appropriate guidance"
+    usage_examples:
+      - "User can't see certain data → check if they have access to those indexes"
+      - "User asks about admin features → check if they have admin role"
+    endpoint: "/services/authentication/current-context"
+    method: "GET"
+    
+    query_params:
+      output_mode: "json"
+    
+    transform:
+      type: "python"
+      file: "transforms/system.py"
+      function: "extract_user_info"

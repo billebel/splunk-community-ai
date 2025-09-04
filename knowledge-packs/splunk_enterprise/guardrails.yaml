@@ -1,0 +1,274 @@
+# Splunk Enterprise v2 Guardrails Configuration
+# Comprehensive safety, security, and performance controls for LLM tool calling
+
+# Global guardrails settings
+guardrails:
+  enabled: true
+  version: "2.0.0"
+  audit_logging: true
+  fail_safe_mode: true  # If config invalid, apply strictest rules
+  
+# Security Controls - Prevent dangerous operations
+security:
+  # Completely blocked SPL commands (will prevent search execution)
+  blocked_commands:
+    - "|delete"           # Data deletion
+    - "|outputlookup"     # File system writes
+    - "|outputcsv"        # File system writes
+    - "|sendemail"        # External communication
+    - "|sendmodularalert" # External communication
+    - "|script"           # Script execution
+    - "|runshellscript"   # Shell command execution
+    - "|external"         # External command execution
+    - "|inputlookup"      # File system reads (can be sensitive)
+    - "|loadjob"          # Job manipulation
+    - "|savedsearch"      # Saved search manipulation
+    - "|crawl"            # Web crawling operations
+    - "|dbxquery"         # Database query execution
+    - "|run"              # Command execution through run
+    - "|collect"          # Data collection with potential file writes
+    - "|summary"          # Summary indexing (can write files)
+    - "|mcollect"         # Metrics collection with writes
+    - "|outputtext"       # Text file output
+    - "|outputjson"       # JSON file output
+    - "|outputxml"        # XML file output
+    - "|base64"           # Base64 encoding/decoding (bypass technique)
+    
+  # Dangerous patterns (regex-based detection with bypass protection)
+  blocked_patterns:
+    - "(?i)eval.*system\\s*\\("        # System command injection (case insensitive)
+    - "(?i)eval.*exec\\s*\\("          # Command execution
+    - "(?i)\\|\\s*eval.*base64\\s*\\("    # Base64 function calls in eval
+    - "(?i)\\|\\s*eval.*\\bdecode\\s*\\("  # Decode function calls in eval (word boundary)
+    - "(?i)index\\s*=\\s*\\*"          # Wildcard index searches
+    - "(?i)search\\s+\\*"              # Unbound wildcard searches
+    - "\\*\\s*\\*"                     # Double wildcards
+    - "(?i)earliest\\s*=\\s*0"         # All-time searches
+    - "(?i)\\|\\s*map\\s+search"       # Resource-intensive map searches
+    - "(?i)\\|\\s*multisearch"         # Complex nested searches
+    - "(?i)\\|\\s*join\\s+type\\s*=\\s*outer" # Expensive outer joins
+    - "(?i)\\.\\./"                    # Path traversal attempts (../)
+    - "(?i)\\.\\.\\\\"                 # Windows path traversal (..\\)
+    - "(?i)/etc/"                      # Unix system directories
+    - "(?i)/root/"                     # Root directory access
+    - "(?i)/home/"                     # Home directory access
+    - "(?i)c:\\\\windows"              # Windows system directory
+    - "(?i)c:\\\\users"                # Windows user directories
+    - "(?i)base64\\s*\\("              # Base64 encoding/decoding
+    - "(?i)decode\\s*\\("              # General decoding functions
+    - "(?i)\\+.*['\"][^'\"]*['\"]"     # String concatenation patterns
+    - "(?i)eval.*\\+.*['\"]"           # Dynamic string construction in eval
+    
+  # Warning patterns (log but allow with restrictions)
+  warning_patterns:
+    - "\\|\\s*stats\\s+.*by\\s+.*,.*,.*" # High cardinality stats
+    - "\\|\\s*transaction"               # Transaction command (expensive)
+    - "\\|\\s*join"                      # Join operations (performance impact)
+    - "\\|\\s*append"                    # Append operations
+    - "rex\\s+field=_raw"                # Raw field regex (expensive)
+
+# Performance Controls - Prevent resource exhaustion
+performance:
+  # Time range limitations
+  time_limits:
+    max_time_range_days: 30          # Maximum search time span
+    default_time_range: "-1h"        # Default if no time specified
+    max_earliest_time: "-365d"       # Cannot search beyond 1 year
+    
+  # Search result limitations  
+  result_limits:
+    max_results_per_search: 1000     # Hard limit per individual search
+    default_result_limit: 100        # Default if no limit specified
+    max_events_to_process: 10000     # Internal processing limit
+    
+  # Search execution constraints
+  execution_limits:
+    search_timeout_seconds: 300      # 5 minute maximum execution time
+    max_concurrent_searches: 5       # Per-user concurrent search limit
+    rate_limit_searches_per_minute: 10  # Prevent search spam
+    
+  # Memory and resource protection
+  resource_limits:
+    max_memory_mb: 512              # Maximum memory per search
+    max_subsearch_depth: 3          # Prevent deep nested searches
+    max_join_fields: 5              # Limit join complexity
+
+# Privacy Controls - Protect sensitive information
+privacy:
+  # Data masking configuration
+  data_masking:
+    enabled: true
+    mask_unknown_sensitive: true    # Mask fields that look sensitive
+    
+  # Sensitive field patterns (case-insensitive matching)
+  sensitive_fields:
+    # Authentication credentials
+    - "username"
+    - "user"
+    - "password"
+    - "passwd" 
+    - "pwd"
+    - "passphrase"
+    - "secret"
+    - "token"
+    - "api_key"
+    - "apikey"
+    - "auth_token"
+    - "access_token"
+    - "bearer_token"
+    
+    # Personal identifiers
+    - "ssn"
+    - "social_security"
+    - "social_security_number"
+    - "sin"  # Social Insurance Number
+    - "national_id"
+    
+    # Financial information
+    - "credit_card"
+    - "creditcard"
+    - "cc_number"
+    - "card_number"
+    - "account_number"
+    - "routing_number"
+    - "bank_account"
+    
+    # Personal information
+    - "email"
+    - "phone"
+    - "phone_number"
+    - "mobile"
+    - "address"
+    - "postal_code"
+    - "zip_code"
+    
+  # Masking patterns for different data types
+  masking_patterns:
+    email: "****@****.***"
+    phone: "***-***-****"
+    ssn: "***-**-****"
+    credit_card: "****-****-****-****"
+    ip_address: "xxx.xxx.xxx.xxx"
+    default: "[MASKED]"
+    
+  # Field filtering (completely remove these fields from results)
+  filtered_fields:
+    - "_raw"              # Raw event data (can contain sensitive info)
+    - "punct"             # Punctuation field (can reveal patterns)
+
+# Role-based access controls
+user_roles:
+  # Administrator - Elevated privileges
+  admin:
+    bypass_time_limits: false        # Even admins have some limits
+    bypass_command_blocks: false     # Security blocks apply to all
+    max_time_range_days: 90         # Extended time range
+    max_results_per_search: 10000   # Higher result limits
+    max_concurrent_searches: 10     # More concurrent searches
+    search_timeout_seconds: 600     # 10 minute timeout
+    rate_limit_searches_per_minute: 20
+    data_masking_enabled: false     # Can see unmasked data
+    
+  # Power User - Moderate privileges  
+  power_user:
+    bypass_time_limits: false
+    bypass_command_blocks: false
+    max_time_range_days: 60
+    max_results_per_search: 5000
+    max_concurrent_searches: 7
+    search_timeout_seconds: 450     # 7.5 minutes
+    rate_limit_searches_per_minute: 15
+    data_masking_enabled: true
+    
+  # Standard User - Restricted access
+  standard_user:
+    bypass_time_limits: false
+    bypass_command_blocks: false
+    max_time_range_days: 7          # One week maximum
+    max_results_per_search: 1000
+    max_concurrent_searches: 3
+    search_timeout_seconds: 300     # 5 minutes
+    rate_limit_searches_per_minute: 10
+    data_masking_enabled: true
+    
+  # Read-only User - Minimal privileges
+  readonly_user:
+    bypass_time_limits: false
+    bypass_command_blocks: false
+    max_time_range_days: 1          # One day maximum
+    max_results_per_search: 100
+    max_concurrent_searches: 2
+    search_timeout_seconds: 120     # 2 minutes
+    rate_limit_searches_per_minute: 5
+    data_masking_enabled: true
+
+# Audit and compliance settings
+audit:
+  # What to log
+  log_blocked_searches: true
+  log_warning_searches: true
+  log_masked_data: true
+  log_rate_limit_violations: true
+  
+  # Audit log retention
+  retain_audit_logs_days: 90
+  
+  # Compliance reporting
+  generate_compliance_reports: true
+  compliance_report_schedule: "weekly"
+
+# Environment-specific overrides
+environments:
+  # Development environment - More permissive
+  development:
+    security:
+      blocked_commands: ["|delete", "|outputlookup"]  # Reduced restrictions
+    performance:
+      max_time_range_days: 90
+      max_results_per_search: 5000
+    privacy:
+      data_masking:
+        enabled: false  # Disable masking in dev
+        
+  # Testing environment - Moderate restrictions
+  testing:
+    performance:
+      max_time_range_days: 60
+      max_results_per_search: 2000
+    privacy:
+      data_masking:
+        enabled: true
+        
+  # Production environment - Strictest controls
+  production:
+    security:
+      # All default restrictions apply
+      additional_blocked_patterns:
+        - "index\\s*=\\s*_internal"  # Block internal index access in prod
+    performance:
+      max_time_range_days: 14       # Stricter time limits
+      max_results_per_search: 500   # Lower result limits
+    privacy:
+      data_masking:
+        enabled: true
+        mask_unknown_sensitive: true
+
+# Notification settings
+notifications:
+  # Alert on security violations
+  security_violations:
+    enabled: true
+    notify_admin: true
+    notify_security_team: true
+    
+  # Performance threshold alerts
+  performance_alerts:
+    enabled: true
+    slow_search_threshold_seconds: 60
+    high_result_count_threshold: 5000
+    
+  # Privacy compliance notifications
+  privacy_notifications:
+    enabled: true
+    data_masking_failures: true
+    sensitive_data_exposure: true

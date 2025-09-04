@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  splunk:
+    image: splunk/splunk:latest
+    container_name: splunk-dev
+    hostname: splunk-dev
+    environment:
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_PASSWORD=${SPLUNK_PASSWORD:-changeme}
+      - SPLUNK_HEC_TOKEN=${SPLUNK_HEC_TOKEN:-your-hec-token-here}
+      - SPLUNK_HEC_SSL=false
+      - SPLUNK_ENABLE_LISTEN=9997
+    ports:
+      - "8000:8000"   # SplunkWeb interface
+      - "8089:8089"   # Management API (used by MCP pack)
+      - "8088:8088"   # HTTP Event Collector
+      - "9997:9997"   # Splunk receiving port
+      - "1514:1514"   # Network input (syslog)
+    volumes:
+      - splunk-etc:/opt/splunk/etc
+      - splunk-var:/opt/splunk/var
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/en-US/account/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+
+volumes:
+  splunk-etc:
+    driver: local
+  splunk-var:
+    driver: local
+
+networks:
+  default:
+    name: splunk-network

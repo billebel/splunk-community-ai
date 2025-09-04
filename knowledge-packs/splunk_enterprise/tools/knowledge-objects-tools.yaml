@@ -1,0 +1,197 @@
+# Knowledge Objects Tools - Discover existing Splunk configurations
+
+tools:
+  get_data_models:
+    type: "list"
+    display_name: "List High-Performance Data Models"
+    description: "⚠️ USE AFTER KNOWLEDGE OBJECT STRATEGY: Find data models for tstats optimization as recommended by strategy planner."
+    business_purpose: "Show LLM which data models can make searches 100x faster"
+    key_capabilities:
+      - "List data models like 'Authentication', 'Web', 'Network_Traffic'"
+      - "Show which ones are accelerated (ready for tstats)"
+      - "Identify structured data for faster analytics"
+    best_used_for:
+      - "When user needs fast searches on large data"
+      - "For statistical analysis and reporting"
+      - "When regular searches are too slow"
+    usage_examples:
+      - "User wants authentication stats → Check if Authentication data model is available"
+      - "User needs web analytics → Look for Web or HTTP data models"
+      - "User wants network analysis → Check Network_Traffic data model"
+    endpoint: "/services/datamodel/model"
+    method: "GET"
+    
+    query_params:
+      output_mode: "json"
+      count: 0
+    
+    transform:
+      type: "python"
+      file: "transforms/knowledge.py"
+      function: "extract_data_models"
+
+  get_data_model_structure:
+    type: "details"
+    display_name: "Show Data Model Fields and Structure"
+    description: "Get the fields and structure of a data model so you can build fast 'tstats' queries"
+    business_purpose: "Show LLM exactly what fields are available in a data model for tstats queries"
+    key_capabilities:
+      - "Show all available fields in the data model"
+      - "Display field types and relationships"
+      - "Provide tstats query examples"
+    best_used_for:
+      - "After finding a data model, see what fields it has"
+      - "Building tstats queries with correct field names"
+      - "Understanding what analytics are possible"
+    usage_examples:
+      - "Found 'Authentication' data model → get structure to see fields like 'user', 'action', 'src'"
+      - "Want to use Web data model → check structure for 'url', 'status', 'bytes' fields"
+    endpoint: "/services/datamodel/model/{model_name}"
+    method: "GET"
+    
+    parameters:
+      - name: "model_name"
+        type: "string"
+        required: true
+        description: "Exact name of the data model to examine (e.g., 'Authentication', 'Web', 'Network_Traffic')"
+        examples: ["Authentication", "Web", "Network_Traffic", "Malware", "Email"]
+        usage_note: "Use exact name from get_data_models results"
+    
+    query_params:
+      output_mode: "json"
+    
+    transform:
+      type: "python"
+      file: "transforms/knowledge.py"
+      function: "extract_data_model_structure"
+
+  get_event_types:
+    type: "list"
+    display_name: "List Pre-defined Event Categories"
+    description: "⚠️ USE AFTER KNOWLEDGE OBJECT STRATEGY: Find event types for categorization as recommended by strategy planner."
+    business_purpose: "Use existing event categories instead of writing complex search logic from scratch"
+    key_capabilities:
+      - "List event types like 'authentication_failure', 'network_scan'"
+      - "See the search logic behind each event type"
+      - "Use eventtype= instead of complex search strings"
+    best_used_for:
+      - "When user asks about common security events"
+      - "To simplify searches using pre-built categories"
+      - "Finding existing definitions for log types"
+    usage_examples:
+      - "User wants 'failed logins' → check if 'failed_login' eventtype exists"
+      - "User asks about 'attacks' → look for security-related eventtypes"
+    endpoint: "/services/saved/eventtypes"
+    method: "GET"
+    
+    query_params:
+      output_mode: "json"
+      count: 0
+    
+    transform:
+      type: "python"
+      file: "transforms/knowledge.py"
+      function: "extract_event_types"
+
+  get_search_macros:
+    type: "list"
+    display_name: "List Reusable Search Shortcuts"
+    description: "⚠️ USE AFTER KNOWLEDGE OBJECT STRATEGY: Find search macros for reusability as recommended by strategy planner."
+    business_purpose: "Use existing search shortcuts instead of writing long, complex searches"
+    key_capabilities:
+      - "List macros like `get_user_activity(user)` or `security_events`"
+      - "Show macro definitions and parameters"
+      - "Simplify complex searches with shortcuts"
+    best_used_for:
+      - "When searches get complex and repetitive"
+      - "To use existing search shortcuts"
+      - "When you need parameterized searches"
+    usage_examples:
+      - "Found `user_activity(username)` macro → use `user_activity(john)` instead of complex search"
+      - "Need security events → check for `security_events` or `threat_detection` macros"
+    endpoint: "/services/admin/macros"
+    method: "GET"
+    
+    query_params:
+      output_mode: "json"
+      count: 0
+    
+    transform:
+      type: "python"
+      file: "transforms/knowledge.py"
+      function: "extract_search_macros"
+
+  get_field_extractions:
+    type: "list"
+    display_name: "See How Fields Are Extracted from Logs"
+    description: "Find out what fields are automatically extracted from different log types"
+    business_purpose: "Show LLM what field names are available for each data source type"
+    key_capabilities:
+      - "List fields available for each sourcetype (apache, windows, etc.)"
+      - "Show how fields are parsed from raw logs"
+      - "Identify searchable field names"
+    best_used_for:
+      - "When you need to know what fields exist in a sourcetype"
+      - "To use correct field names in searches"
+      - "Understanding data structure before building queries"
+    usage_examples:
+      - "Building apache search → check field extractions to see 'status', 'method', 'uri' fields"
+      - "Need Windows fields → see what fields like 'EventCode', 'Computer' are available"
+    endpoint: "/services/data/props/extractions"
+    method: "GET"
+    
+    query_params:
+      output_mode: "json"
+      count: 0
+    
+    transform:
+      type: "python"
+      file: "transforms/knowledge.py"
+      function: "extract_field_extractions"
+
+  get_lookup_tables:
+    type: "list"
+    display_name: "🔗 Find Reference Data & Lookup Tables"
+    description: "⚠️ USE AFTER KNOWLEDGE OBJECT STRATEGY: List lookup definitions for data enrichment as recommended by strategy planner."
+    business_purpose: "Show all available lookup tables that can enrich searches with additional context data"
+    key_capabilities:
+      - "List CSV lookup files and KV store collections"
+      - "Show external/scripted lookup commands"
+      - "Display lookup fields and data types"
+      - "Identify file sizes and update status"
+      - "Show which app owns each lookup"
+    best_used_for:
+      - "Finding reference data for IP geolocation, user details, asset inventory"
+      - "Discovering available lookups before building enrichment queries"
+      - "Understanding what external data sources are configured"
+      - "Planning data correlation and enrichment strategies"
+    usage_examples:
+      - "User wants IP locations → find 'geoip' or similar geographic lookups"
+      - "Need user/employee details → discover HR or identity management lookups" 
+      - "Want asset information → locate CMDB or inventory lookups"
+      - "Building threat intelligence → find IOC or threat feed lookups"
+    endpoint: "/services/data/transforms/lookups"
+    method: "GET"
+    
+    parameters:
+      - name: "include_size"
+        type: "boolean"
+        required: false
+        default: true
+        description: "Include file size information for CSV lookups"
+        
+      - name: "app_filter"
+        type: "string"
+        required: false
+        description: "Limit results to specific Splunk app"
+        examples: ["search", "security_essentials", "enterprise_security"]
+    
+    query_params:
+      output_mode: "json"
+      count: 0
+      getsize: true
+    
+    transform:
+      type: "python"
+      file: "transforms/knowledge.py"
+      function: "extract_lookup_definitions"

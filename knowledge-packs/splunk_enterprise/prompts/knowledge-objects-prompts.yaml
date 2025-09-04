@@ -13,7 +13,7 @@ prompts:
       **Based on your request, I'll recommend which knowledge objects to explore:**
       
       **For Search Performance Optimization:**
-      - **Data Models** → Use for tstats queries (100x faster than regular search)
+      - **Data Models** → Use for tstats queries (can be significantly faster than regular search)
       - **Search Macros** → Reusable search shortcuts and templates
       
       **For Data Enrichment & Context:**

@@ -129,7 +129,7 @@ Our pack includes 5 strategic AI behavior prompts that guide how AI assistants i
 - **Example guidance**: *"Cost score >40: Add index filters, reduce time ranges, stagger from :00 minutes"*
 
 #### 🧩 **Knowledge Objects** - Leverage Existing Assets
-- **Performance priority** - Data models first (tstats = 100x faster), then search macros
+- **Performance priority** - Data models first (tstats can be significantly faster), then search macros
 - **Enrichment discovery** - Lookup tables for context, event types for categorization
 - **Usage templates** - Ready-to-use query patterns for each object type
 - **Example guidance**: *"For speed: Check accelerated data models first, get tstats examples"*
@@ -174,7 +174,7 @@ AI Process with Knowledge Object Guidance:
 
 2. Discovers accelerated data models → finds 'Endpoint.Processes' 
    - AI receives: "| tstats count from datamodel=Endpoint.Processes by _time span=1h"
-   - 100x faster execution than traditional search
+   - Potentially much faster execution than traditional search
 
 3. Applies threat logic with macro shortcuts → uses existing search macros
    - AI finds: `powershell_encoded_command` macro

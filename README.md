@@ -29,8 +29,8 @@ A Splunk integration pack that tries to make AI assistants better at working wit
 
 1. **Clone and Configure**
    ```bash
-   git clone https://github.com/your-org/splunk-community-mcp.git
-   cd splunk-community-mcp
+   git clone https://github.com/billebel/splunk-community-ai.git
+   cd splunk-community-ai
    cp .env.example .env
    ```
 
@@ -290,8 +290,8 @@ Built on open-source tools we're learning with:
 ### 🤝 We Want Your Input
 This is **very early in development** - we're sharing what we've built so far and hoping you'll help us make it better. Your experience and feedback will shape where this goes.
 
-- 🐛 **Found something broken?** → [Tell us about it](https://github.com/your-org/splunk-community-mcp/issues)
-- 💡 **Have ideas or suggestions?** → [Let's discuss them](https://github.com/your-org/splunk-community-mcp/discussions)
+- 🐛 **Found something broken?** → [Tell us about it](https://github.com/billebel/splunk-community-ai/issues)
+- 💡 **Have ideas or suggestions?** → [Let's discuss them](https://github.com/billebel/splunk-community-ai/discussions)
 - 🛠️ **Want to contribute?** → We'd love your help!
 
 ### 🚀 Help Us Extend It
@@ -335,4 +335,4 @@ MIT License - Use it, modify it, share it.
 
 **Give it a try and let us know what you think!** 
 
-*Questions? Check [our docs](docs/) or [start a conversation](https://github.com/your-org/splunk-community-mcp/discussions)*
+*Questions? Check [our docs](docs/) or [start a conversation](https://github.com/billebel/splunk-community-ai/discussions)*

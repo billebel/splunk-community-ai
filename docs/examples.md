@@ -241,4 +241,4 @@ These examples assume:
 - Your Splunk environment is set up with reasonable field extractions
 - The AI has necessary permissions to search your data
 
-Every environment is different, and we're still learning what works best in different setups. If you find patterns that work well (or don't work), please [share them with us](https://github.com/your-org/splunk-community-mcp/discussions)!
+Every environment is different, and we're still learning what works best in different setups. If you find patterns that work well (or don't work), please [share them with us](https://github.com/billebel/splunk-community-ai/discussions)!

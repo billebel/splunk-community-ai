@@ -17,13 +17,13 @@ A Splunk integration pack that tries to make AI assistants better at working wit
 
 ### 🛡️ Security-Focused Design  
 - **Built-in Guardrails** - Query validation, resource limits, and safety controls
-- **Compliance Ready** - Audit logging and access control integration
+- **Audit Logging** - Basic interaction logging and access controls
 - **Privacy Controls** - Data masking and field filtering capabilities
 
 ### 🧩 Modular & Extensible
 - **17+ Specialized Tools** - From discovery to execution to diagnostics
 - **5 AI Behavior Prompts** - We're experimenting with prompts that try to guide AI behavior
-- **Clean Architecture** - Easy to understand, maintain, and extend
+- **Modular Design** - Organized structure for understanding and extension
 
 ## Quick Setup
 
@@ -83,7 +83,7 @@ A Splunk integration pack that tries to make AI assistants better at working wit
 - `list_indexes` - Find available data repositories
 - `get_sourcetypes` - Understand data types and formats
 - `get_hosts` - Identify systems and sources
-- `find_data_sources` - Advanced data mapping
+- `find_data_sources` - Data source discovery and mapping
 
 #### 📊 **Knowledge Objects** (6 tools)  
 - `get_data_models` - Discover accelerated data structures
@@ -110,7 +110,7 @@ A Splunk integration pack that tries to make AI assistants better at working wit
 
 Our pack includes 5 strategic AI behavior prompts that guide how AI assistants interact with Splunk:
 
-#### 🎯 **Search Strategy** - Smart Query Orchestration
+#### 🎯 **Search Strategy** - Query Planning and Guidance
 - **Fast-track common requests** - Authentication failures, web errors → immediate execution 
 - **Discovery shortcuts** - `find_data_sources` provides ready-to-use patterns instead of manual exploration
 - **Safety-first execution** - Built-in confirmation rules and resource limits
@@ -154,7 +154,7 @@ AI Process with Strategic Guidance:
 
 2. Discovers data efficiently → find_data_sources provides pre-built queries
    - Returns: index=security EventCode=4625 earliest=-1h
-   - Already optimized for performance and safety
+   - Includes basic performance and safety considerations
 
 3. Executes with confidence → No discovery phase needed
    - AI uses recommended search immediately
@@ -163,7 +163,7 @@ AI Process with Strategic Guidance:
 4. Analyzes enriched results → "15 failed logins from 3 IPs, targeting 'admin'"
 ```
 
-### Threat Hunter - Performance-Optimized Analysis  
+### Threat Hunter - Performance-Focused Analysis  
 ```
 Hunter: "Look for suspicious PowerShell activity across endpoints"
 
@@ -185,7 +185,7 @@ AI Process with Knowledge Object Guidance:
    - Timeline reconstruction with business context
 ```
 
-### Security Operations - Comprehensive Diagnostics
+### Security Operations - System Health Monitoring
 ```
 Responder: "Check our detection capabilities and system health"
 
@@ -195,7 +195,7 @@ AI Process with System Diagnostics Guidance:
    - License compliance validation
    - Security app status verification
 
-2. Executes comprehensive health assessment:
+2. Executes health assessment:
    - System resources: "✅ Memory: 65% (Normal), License: Valid"
    - Security apps: "✅ 12 security add-ons enabled, 2 updates available"
    - User permissions: "🔑 Full admin access, 47 capabilities enabled"
@@ -213,10 +213,10 @@ This pack supports multiple deployment modes depending on your needs:
 
 ### 🌐 **Full Web Experience** (`docker-compose.yml`)
 **Best for**: Interactive analysis, demonstrations, proof-of-concepts
-- Complete LibreChat web interface with authentication
+- LibreChat web interface with authentication
 - User-friendly chat interface for Splunk exploration  
 - Built-in guardrails and controlled environment
-- Perfect for security teams wanting to experiment with AI + Splunk
+- Suitable for security teams wanting to experiment with AI + Splunk
 - **Requires**: Splunk credentials + AI API key (Claude, OpenAI, etc.)
 
 ### 🔌 **MCP Server Only** (`docker-compose.mcp-only.yml`) 
@@ -267,7 +267,7 @@ result = client.call_tool("list_indexes", {})
 ### Privacy & Compliance
 - **Data Masking Rules** - Automatic PII/PHI protection
 - **Field Filtering** - Hide sensitive data by role
-- **Audit Trail** - Complete interaction logging
+- **Audit Trail** - Interaction logging and monitoring
 - **RBAC Integration** - Respects Splunk user permissions
 
 ## Documentation

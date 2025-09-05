@@ -93,6 +93,8 @@ class TestDockerComposeValidation:
             ], cwd=project_root, capture_output=True, text=True)
             
             assert result.returncode == 0, f"docker-compose.yml syntax error: {result.stderr}"
+        except FileNotFoundError:
+            pytest.skip("docker-compose not available in test environment")
         finally:
             # Cleanup temporary .env file
             if not env_existed and temp_env.exists():
@@ -100,19 +102,25 @@ class TestDockerComposeValidation:
     
     def test_mcp_only_compose_syntax(self, project_root):
         """Test MCP-only compose syntax validation"""
-        result = subprocess.run([
-            "docker-compose", "-f", "docker-compose.mcp-only.yml", "config"
-        ], cwd=project_root, capture_output=True, text=True)
-        
-        assert result.returncode == 0, f"docker-compose.mcp-only.yml syntax error: {result.stderr}"
+        try:
+            result = subprocess.run([
+                "docker-compose", "-f", "docker-compose.mcp-only.yml", "config"
+            ], cwd=project_root, capture_output=True, text=True)
+            
+            assert result.returncode == 0, f"docker-compose.mcp-only.yml syntax error: {result.stderr}"
+        except FileNotFoundError:
+            pytest.skip("docker-compose not available in test environment")
     
     def test_splunk_compose_syntax(self, project_root):
         """Test Splunk development compose syntax validation"""
-        result = subprocess.run([
-            "docker-compose", "-f", "docker-compose.splunk.yml", "config"
-        ], cwd=project_root, capture_output=True, text=True)
-        
-        assert result.returncode == 0, f"docker-compose.splunk.yml syntax error: {result.stderr}"
+        try:
+            result = subprocess.run([
+                "docker-compose", "-f", "docker-compose.splunk.yml", "config"
+            ], cwd=project_root, capture_output=True, text=True)
+            
+            assert result.returncode == 0, f"docker-compose.splunk.yml syntax error: {result.stderr}"
+        except FileNotFoundError:
+            pytest.skip("docker-compose not available in test environment")
 
 
 @pytest.mark.integration
@@ -135,10 +143,13 @@ SPLUNK_PASSWORD=test
         with open(project_root / ".env", "w") as f:
             f.write(env_content)
         
-        # Start MCP-only deployment
-        subprocess.run([
-            "docker-compose", "-f", "docker-compose.mcp-only.yml", "up", "-d"
-        ], cwd=project_root, check=True)
+        # Start MCP-only deployment  
+        try:
+            subprocess.run([
+                "docker-compose", "-f", "docker-compose.mcp-only.yml", "up", "-d"
+            ], cwd=project_root, check=True)
+        except FileNotFoundError:
+            pytest.skip("docker-compose not available in test environment")
         
         # Wait for services to start
         time.sleep(10)

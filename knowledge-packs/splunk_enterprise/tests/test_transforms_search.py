@@ -59,10 +59,10 @@ class TestExtractSearchResults:
         
         result = extract_search_results(sample_splunk_response, variables)
         
-        assert result['status'] == 'success'
+        assert result['success'] == True
         assert 'events' in result
         assert len(result['events']) == 2
-        assert 'summary' in result
+        assert 'field_summary' in result
     
     def test_extract_search_results_with_masking(self, sample_splunk_response):
         """Test search results with data masking applied"""
@@ -90,7 +90,7 @@ class TestExtractSearchResults:
             
             result = extract_search_results(sample_splunk_response, variables)
             
-            assert result['status'] == 'success'
+            assert result['success'] == True
             event = result['events'][0]
             assert event['username'] == "j***@***.***"
             assert event['password'] == "[MASKED]"
@@ -105,7 +105,7 @@ class TestExtractSearchResults:
         
         result = extract_search_results(sample_splunk_response, variables)
         
-        assert result['status'] == 'success'
+        assert result['success'] == True
         assert len(result['events']) == 1
         assert 'limited_results' in result
         assert result['limited_results'] is True
@@ -167,7 +167,7 @@ class TestExtractSearchResults:
         
         result = extract_search_results(empty_response)
         
-        assert result['status'] == 'success'
+        assert result['success'] == True
         assert result['events'] == []
         assert 'No events found' in result['message']
     
@@ -177,7 +177,7 @@ class TestExtractSearchResults:
         
         result = extract_search_results(malformed_response)
         
-        assert result['status'] == 'error'
+        assert result['success'] == False
         assert 'Error processing search results' in result['message']
     
     def test_extract_search_results_large_dataset_handling(self):
@@ -202,7 +202,7 @@ class TestExtractSearchResults:
         
         result = extract_search_results(large_response, variables)
         
-        assert result['status'] == 'success'
+        assert result['success'] == True
         assert len(result['events']) == 1000  # Should be limited
         assert result['limited_results'] is True
         assert result['total_available'] == 2000
@@ -218,7 +218,7 @@ class TestExtractSearchResults:
         
         for scenario in error_scenarios:
             result = extract_search_results(scenario)
-            assert result['status'] == 'error'
+            assert result['success'] == False
             assert 'message' in result
 
 
@@ -374,7 +374,7 @@ class TestPerformanceOptimization:
         
         # Should limit memory usage
         assert len(result['events']) == 100
-        assert result['status'] == 'success'
+        assert result['success'] == True
     
     def test_streaming_result_processing(self):
         """Test streaming processing for very large results"""
@@ -413,7 +413,7 @@ class TestErrorHandling:
         result = extract_search_results(mixed_data)
         
         # Should process valid events and skip invalid ones
-        assert result['status'] == 'success'
+        assert result['success'] == True
         assert len(result['events']) == 3  # Only valid events
         assert 'warnings' in result
     

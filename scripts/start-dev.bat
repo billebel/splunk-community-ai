@@ -1,7 +1,7 @@
 @echo off
 REM Windows batch script to start development environment
 
-echo Starting FastMCP Synapse MCP Development Environment...
+echo Starting Splunk AI Integration Development Environment...
 echo.
 
 REM Check if Docker is running
@@ -12,11 +12,25 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM Check if .env file exists
+if not exist ".env" (
+    echo WARNING: .env file not found. Creating from .env.example...
+    if exist ".env.example" (
+        copy ".env.example" ".env" >nul
+        echo Please edit .env file with your Splunk credentials before continuing.
+        pause
+    ) else (
+        echo ERROR: .env.example not found. Please create .env file manually.
+        pause
+        exit /b 1
+    )
+)
+
 echo This will start:
-echo - Splunk Enterprise (Web UI: http://localhost:8000)
-echo - FastMCP Synapse MCP Server (API: http://localhost:8443)
+echo - Splunk Enterprise (Web UI: http://localhost:8000, admin/changeme)
+echo - Catalyst MCP Server (API: http://localhost:8443)
 echo.
-echo Login credentials: Check your .env file or use defaults
+echo Login credentials: Check your .env file
 echo.
 
 set /p confirm="Continue? (y/N): "
@@ -27,7 +41,7 @@ if /i not "%confirm%"=="y" (
 
 echo.
 echo Starting development environment...
-docker-compose -f docker-compose.dev.yml up -d
+docker-compose -f docker-compose.splunk.yml up -d
 
 if errorlevel 1 (
     echo.
@@ -37,20 +51,23 @@ if errorlevel 1 (
 )
 
 echo.
+echo Waiting for services to start...
+timeout /t 10 /nobreak >nul
+
+echo.
 echo ========================================
 echo Development Environment Started!
 echo ========================================
 echo.
-echo Splunk Web UI: http://localhost:8000
+echo Splunk Web UI: http://localhost:8000 (admin/changeme)
 echo Splunk API:    https://localhost:8089
 echo MCP Server:    http://localhost:8443
 echo.
-echo Login: Check your .env file or use environment defaults
-echo.
-echo Useful commands:
-echo   scripts\stop-dev.bat     - Stop services
-echo   scripts\logs-dev.bat     - View logs
-echo   scripts\test-mcp.bat     - Test MCP endpoints
+echo Next steps:
+echo   1. Wait 2-3 minutes for Splunk to fully start
+echo   2. Test MCP server: scripts\test-mcp.bat
+echo   3. View logs: docker-compose -f docker-compose.splunk.yml logs
+echo   4. Stop services: scripts\stop-dev.bat
 echo.
 
 pause

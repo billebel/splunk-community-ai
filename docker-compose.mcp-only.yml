@@ -11,11 +11,11 @@ services:
     environment:
       # Splunk Connection (required)
       - SPLUNK_URL=${SPLUNK_URL:-https://your-splunk-instance:8089}
-      - SPLUNK_USER=${SPLUNK_USER:-admin}
-      - SPLUNK_PASSWORD=${SPLUNK_PASSWORD:-changeme}
+      - SPLUNK_USER=${SPLUNK_USER}
+      - SPLUNK_PASSWORD=${SPLUNK_PASSWORD}
       
       # Optional: HEC token for log ingestion
-      - SPLUNK_HEC_TOKEN=${SPLUNK_HEC_TOKEN:-your-hec-token}
+      - SPLUNK_HEC_TOKEN=${SPLUNK_HEC_TOKEN}
       
       # MCP Server Configuration
       - MCP_SERVER_HOST=0.0.0.0

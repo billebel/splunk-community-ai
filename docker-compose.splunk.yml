@@ -7,8 +7,8 @@ services:
     hostname: splunk-dev
     environment:
       - SPLUNK_START_ARGS=--accept-license
-      - SPLUNK_PASSWORD=${SPLUNK_PASSWORD:-changeme}
-      - SPLUNK_HEC_TOKEN=${SPLUNK_HEC_TOKEN:-your-hec-token-here}
+      - SPLUNK_PASSWORD=${SPLUNK_PASSWORD}
+      - SPLUNK_HEC_TOKEN=${SPLUNK_HEC_TOKEN}
       - SPLUNK_HEC_SSL=false
       - SPLUNK_ENABLE_LISTEN=9997
     ports:
@@ -27,6 +27,22 @@ services:
       timeout: 10s
       retries: 3
       start_period: 2m
+
+  catalyst-mcp:
+    build: .
+    container_name: catalyst-mcp-dev
+    ports:
+      - "8443:8443"   # MCP server API endpoint
+    environment:
+      - MCP_PORT=8443
+      - SPLUNK_URL=${SPLUNK_URL:-http://splunk-dev:8089}
+      - SPLUNK_USER=${SPLUNK_USER:-admin}
+      - SPLUNK_PASSWORD=${SPLUNK_PASSWORD}
+    depends_on:
+      - splunk
+    volumes:
+      - ./knowledge-packs:/app/knowledge-packs:ro
+    restart: unless-stopped
 
 volumes:
   splunk-etc:

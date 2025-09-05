@@ -113,6 +113,9 @@ logs/
 .vscode/
 *.code-workspace
 
+# Claude Code settings (contains personal preferences)
+.claude/settings.local.json
+
 # IntelliJ / PyCharm
 .idea/
 *.iws

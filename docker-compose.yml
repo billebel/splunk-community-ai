@@ -10,7 +10,7 @@ services:
     environment:
       - MCP_PORT=8443
       - MCP_TRANSPORT=http
-      - SPLUNK_URL=https://host.docker.internal:8089
+      - SPLUNK_URL=${SPLUNK_URL:-https://host.docker.internal:8089}
     volumes:
       - ./catalyst_mcp:/app/catalyst_mcp
       - ./knowledge-packs:/app/knowledge-packs

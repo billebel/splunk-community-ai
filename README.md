@@ -54,7 +54,7 @@ This approach provides a number of benefits:
 We've designed this reference model to work in different environments and use cases:
 
 *   **Web Portal Integration:** Complete audit-ready interface with session management and user tracking
-*   **MCP Server:** Lightweight integration with existing AI tools like Claude Desktop
+*   **MCP Server (MCP-only):** Lightweight integration with existing AI tools like Claude Desktop
 *   **Development Environment:** Testing setup with sample Splunk data for evaluation
 
 To ensure reliability, we've built comprehensive validation into the reference model. Our automated testing covers security guardrails, deployment procedures, and cross-platform compatibility. We believe that trust in AI systems comes from transparent validation of their behavior.

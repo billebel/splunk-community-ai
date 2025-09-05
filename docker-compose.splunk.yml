@@ -28,6 +28,22 @@ services:
       retries: 3
       start_period: 2m
 
+  catalyst-mcp:
+    build: .
+    container_name: catalyst-mcp-dev
+    ports:
+      - "8443:8443"   # MCP server API endpoint
+    environment:
+      - MCP_PORT=8443
+      - SPLUNK_URL=${SPLUNK_URL:-http://splunk-dev:8089}
+      - SPLUNK_USER=${SPLUNK_USER:-admin}
+      - SPLUNK_PASSWORD=${SPLUNK_PASSWORD:-admin123}
+    depends_on:
+      - splunk
+    volumes:
+      - ./knowledge-packs:/app/knowledge-packs:ro
+    restart: unless-stopped
+
 volumes:
   splunk-etc:
     driver: local

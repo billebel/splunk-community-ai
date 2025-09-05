@@ -71,8 +71,19 @@ class TestMCPServerBasics:
             config = yaml.safe_load(f)
         
         # Should have security configurations mentioned in README
-        assert "blocked_commands" in config, "Guardrails should define blocked commands"
+        assert "guardrails" in config, "Guardrails should have main guardrails section"
         assert "user_roles" in config, "Guardrails should define user roles"
+        
+        # Check for blocked commands in environments (new nested structure)
+        has_blocked_commands = False
+        if "environments" in config:
+            for env_name, env_config in config["environments"].items():
+                if "security" in env_config and "blocked_commands" in env_config["security"]:
+                    has_blocked_commands = True
+                    break
+        
+        assert has_blocked_commands or "blocked_commands" in config, \
+            "Guardrails should define blocked commands (either top-level or in environments)"
 
 
 class TestMCPToolIntegration:

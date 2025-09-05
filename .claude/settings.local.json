@@ -29,7 +29,10 @@
       "Bash(python -m pytest test_deployment_scripts.py -v)",
       "Bash(git add:*)",
       "Bash(gh pr checks:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(python -m pytest tests/deployment/test_configuration.py::TestDockerComposeEnvironmentIntegration::test_compose_files_use_env_vars -v)",
+      "Bash(python -m pytest tests/e2e/test_quick_start.py::TestCommonUserMistakes::test_port_conflicts_guidance -v)",
+      "Bash(python -m pytest tests/ -v --tb=short)"
     ],
     "deny": [],
     "ask": []

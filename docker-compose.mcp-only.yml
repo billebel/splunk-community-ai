@@ -15,7 +15,7 @@ services:
       - SPLUNK_PASSWORD=${SPLUNK_PASSWORD}
       
       # Optional: HEC token for log ingestion
-      - SPLUNK_HEC_TOKEN=${SPLUNK_HEC_TOKEN:-your-hec-token}
+      - SPLUNK_HEC_TOKEN=${SPLUNK_HEC_TOKEN}
       
       # MCP Server Configuration
       - MCP_SERVER_HOST=0.0.0.0

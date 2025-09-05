@@ -1,0 +1,110 @@
+name: Auto-Generate Blog Posts
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    types: [ closed ]
+  workflow_dispatch:
+    inputs:
+      force_post:
+        description: 'Force create blog post for latest commit'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  analyze-and-blog:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2  # Get previous commit for comparison
+        
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        pip install pyyaml requests python-dateutil
+        
+    - name: Analyze commits for blog-worthy content
+      id: analyze
+      run: |
+        python .github/scripts/analyze-commits.py
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Generate blog post
+      if: steps.analyze.outputs.should_create_post == 'true' || github.event.inputs.force_post == 'true'
+      run: |
+        python .github/scripts/generate-blog-post.py
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COMMIT_HASH: ${{ github.sha }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        
+    - name: Commit blog post
+      if: steps.analyze.outputs.should_create_post == 'true' || github.event.inputs.force_post == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "Blog Bot"
+        git add blog/_posts/
+        if git diff --staged --quiet; then
+          echo "No blog post changes to commit"
+        else
+          git commit -m "📝 Auto-generated blog post: ${{ steps.analyze.outputs.post_title }}"
+          git push
+        fi
+        
+    - name: Trigger social media posting
+      if: steps.analyze.outputs.should_create_post == 'true' && steps.analyze.outputs.social_worthy == 'true'
+      run: |
+        echo "🚀 Triggering social media posts..."
+        python .github/scripts/social-media-post.py
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+        TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+        TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+        TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
+        REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+        REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+        REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+        
+  deploy-blog:
+    needs: analyze-and-blog
+    runs-on: ubuntu-latest
+    if: needs.analyze-and-blog.outputs.blog_updated == 'true'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.1'
+        bundler-cache: true
+        working-directory: ./blog
+        
+    - name: Build Jekyll site
+      run: |
+        cd blog
+        bundle exec jekyll build
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./blog/_site
+        publish_branch: gh-pages

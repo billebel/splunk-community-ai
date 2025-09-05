@@ -69,6 +69,17 @@ This project is for you if you are a Splunk customer, administrator, or security
 
 This is not a "plug-and-play" solution, but rather a set of tools and patterns that we hope will be useful to the community.
 
+## Prerequisites
+
+Before you begin, ensure you have:
+
+*   **Docker and Docker Compose:** Required for containerized deployment
+*   **API Keys (for web interface option):** At least one of:
+    *   `ANTHROPIC_API_KEY` - For Claude models (recommended)
+    *   `OPENAI_API_KEY` - For OpenAI GPT models
+    *   `GOOGLE_API_KEY` - For Google Gemini models
+*   **Splunk Access:** Connection details for your Splunk instance
+
 ## Getting Started
 
 While this isn't a plug-and-play solution, we've created a set of documents to help you get started. We hope you'll find them useful.

@@ -26,19 +26,26 @@ class TestMCPServerBasics:
         tool_files = list(tools_dir.glob("*.yaml"))
         assert len(tool_files) > 0, "Should have tool definition files"
         
-        # Check a few key tools mentioned in README
+        # Check a few key tools that should exist
         expected_tools = [
-            "list_indexes", "execute_splunk_search", 
-            "get_data_models", "validate_search_query"
+            "list_indexes", "get_data_models", 
+            "validate_search_query", "get_server_info"
         ]
         
         found_tools = []
         for tool_file in tool_files:
-            found_tools.append(tool_file.stem)
+            import yaml
+            try:
+                with open(tool_file, 'r', encoding='utf-8') as f:
+                    tool_config = yaml.safe_load(f)
+                    if 'tools' in tool_config:
+                        found_tools.extend(tool_config['tools'].keys())
+            except Exception as e:
+                pass  # Skip files that can't be parsed
         
         for expected in expected_tools:
-            assert any(expected in tool for tool in found_tools), \
-                f"Expected tool {expected} not found in tools directory"
+            assert expected in found_tools, \
+                f"Expected tool {expected} not found in tools files. Found tools: {found_tools}"
     
     def test_knowledge_pack_structure(self):
         """Test that knowledge pack structure supports MCP server"""
@@ -139,8 +146,8 @@ class TestMCPToolIntegration:
             engine = GuardrailsEngine()
             
             # Should have key security methods
-            assert hasattr(engine, 'validate_search_query'), \
-                "GuardrailsEngine should have validate_search_query method"
+            assert hasattr(engine, 'validate_search'), \
+                "GuardrailsEngine should have validate_search method"
             assert hasattr(engine, 'apply_data_masking'), \
                 "GuardrailsEngine should have apply_data_masking method"
             

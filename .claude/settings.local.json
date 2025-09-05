@@ -21,7 +21,15 @@
       "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\transforms/**)",
       "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\transforms/**)",
       "Read(/C:\\Users\\willi\\Python Projects\\splunk-community-mcp\\knowledge-packs\\splunk_enterprise\\tests/**)",
-      "Bash(python -m pytest test_guardrails_security.py -k \"masking\" -xvs)"
+      "Bash(python -m pytest test_guardrails_security.py -k \"masking\" -xvs)",
+      "WebSearch",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(python -m pytest tests/test_transforms_discovery.py::TestExtractIndexes::test_extract_indexes_basic -vvv)",
+      "Bash(python -m pytest tests/test_transforms_knowledge.py -x)",
+      "Bash(python -m pytest test_deployment_scripts.py -v)",
+      "Bash(git add:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": [],
     "ask": []

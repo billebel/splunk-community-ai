@@ -170,8 +170,9 @@ def main():
             f.write(f"post_category={analysis['post_category']}\n")
             f.write(f"post_tags={','.join(analysis['post_tags'])}\n")
     
-    # Exit with appropriate code
-    sys.exit(0 if analysis["should_create_post"] else 1)
+    # Always exit successfully - the analysis worked correctly
+    # The workflow will check the outputs to decide next steps
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()

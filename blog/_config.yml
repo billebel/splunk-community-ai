@@ -1,0 +1,60 @@
+# Splunk Community AI - Development Blog
+title: "Splunk Community AI Development Blog"
+description: "Real-time updates from the Splunk Community AI project - automated posts from our development commits"
+baseurl: "/blog"
+url: "https://billebel.github.io/splunk-community-ai"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Author info
+author:
+  name: "Splunk Community AI Team"
+  email: "community@splunk-ai.dev"
+
+# Social links
+github_username: billebel
+twitter_username: splunk_community_ai
+
+# Blog settings
+show_excerpts: true
+paginate: 10
+
+# Collections
+collections:
+  releases:
+    output: true
+    permalink: /:collection/:name/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+      author: "Development Team"
+      categories: ["development"]
+  - scope:
+      path: ""
+      type: "releases"
+    values:
+      layout: "release"
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/

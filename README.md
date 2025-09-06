@@ -1,30 +1,41 @@
-# A Reference Model for Secure AI in Splunk
+# Secure, Governable AI Gateway for Splunk
 
-We believe that AI can be a powerful tool for Splunk users, but we also know that deploying AI in a production environment brings a unique set of challenges. This project is our attempt to provide a reference model for how to do it safely, securely, and in a way that will satisfy your security, compliance, and audit teams.
+**A production-ready alternative to Splunk AI Assistant focused on safety, compliance, and predictable results using Configuration as Code.**
 
-## The Challenge: Bridging the Gap Between AI and the Enterprise
+The `splunk-community-ai` project is an open-source, governable AI gateway for Splunk that addresses the core challenges of enterprise AI integration. If you're looking for a way to use LLMs with Splunk without the risk of inefficient queries, data exposure, or unpredictable AI behavior, this project provides auditable security guardrails and predictable workflows.
 
-Many of us are excited about the potential of AI, but we also have to answer tough questions from our colleagues:
+## The Problem: Why Enterprise AI Integration Fails
 
-*   **Security:** "How can we be sure the AI won't run a dangerous command?"
-*   **Compliance:** "How do we audit what the AI is doing? Can we prove it's not accessing sensitive data?"
-*   **Reliability:** "How can we get consistent and predictable results from the AI?"
+Current AI solutions for Splunk create significant risks in production environments:
 
-Simple AI integrations often work well in a lab, but they can be difficult to deploy in a real-world enterprise environment where these questions must be answered.
+*   **Uncontrolled AI Behavior:** AI assistants guess at index names, create inefficient searches, and potentially expose sensitive data
+*   **No Security Guardrails:** Direct API access allows AI to run dangerous commands like `| delete` or `| outputlookup`
+*   **Compliance Nightmares:** No audit trail of AI decisions or ability to prove data protection compliance
+*   **Unpredictable Results:** Every AI interaction is different, making it impossible to ensure consistent, safe behavior
+*   **Hidden Security Policies:** Security logic buried in application code that auditors can't easily review
 
-### The Problem with "AI Does Whatever It Wants"
+## Our Solution: A Governance-First Approach
 
-When AI has direct access to Splunk APIs, it makes decisions in isolation - guessing at index names, creating inefficient searches, and potentially exposing sensitive data. Every interaction is different, making it impossible to ensure consistent, safe behavior.
+Instead of letting AI improvise with dangerous freedom, we implement **Configuration as Code** - a controlled approach where AI follows your organization's best practices every time. This creates a reliable governance layer where you can enforce data protection, search efficiency, and compliance requirements before any query runs.
 
-We believe the solution is a controlled approach: instead of letting AI improvise, we provide version-controlled guidance that ensures AI follows your organization's best practices every time. This creates a reliable "choke point" where you can enforce data protection, search efficiency, and compliance requirements before any query runs.
+## Key Features: Enterprise-Grade AI Governance
 
-## Our Approach: Configuration as Code
+### 🛡️ Auditable Security Guardrails
+Use a simple `guardrails.yaml` file to **block dangerous commands** like `| delete` or **mask sensitive fields** to prevent data leakage. Security policies are version-controlled and human-readable - no more security logic buried in code.
 
-Instead of embedding security policies and AI logic deep within the application code, we've taken a different approach. We believe that everything important should be defined in simple, human-readable configuration files.
+### 🔄 Predictable AI with Prompt Workflows  
+Ensure consistent and reliable results by guiding AI with **version-controlled workflows**, preventing dangerous improvisations and ensuring repeatable outcomes.
 
-This means that your security policies, your data masking rules, and even the AI's behavior are all defined in version-controlled `YAML` files.
+### 📊 Complete Audit Trail via Git
+Maintain a perfect, immutable record of every policy change for **compliance and security reviews**. When auditors ask "How do you control your AI?", show them your git history.
 
-For example, here's how you can define a security policy in `guardrails.yaml`:
+### ⚡ Performance Optimization
+Built-in **query efficiency controls** and **resource management** prevent AI from creating expensive searches that impact Splunk performance.
+
+### 🎯 Multi-LLM Support
+Works with **OpenAI, Anthropic Claude, Google Gemini** - choose the right model for your security requirements and budget.
+
+Show your auditors exactly how AI is controlled with simple, readable configuration:
 
 ```yaml
 # guardrails.yaml - A clear, auditable security policy
@@ -41,13 +52,21 @@ sensitive_fields:
 
 When your auditor asks to see your security policies, you don't have to show them Python code. You can show them this file.
 
-## What This Reference Model Offers
+## Who This Is For
 
-This approach provides a number of benefits:
+This **secure AI gateway** is designed for organizations that need enterprise-grade AI governance:
 
-*   **For Security Teams:** A clear, auditable, and version-controlled security policy that can be reviewed and approved without needing to be a programmer.
-*   **For Compliance and Audit Teams:** A complete audit trail of all policy changes. `git log guardrails.yaml` shows you who changed what, when, and why.
-*   **For Splunk Admins and Operations Teams:** A more predictable and reliable AI that can be configured to follow your organization's best practices.
+### 🏢 **Security Teams**
+Get auditable, version-controlled security policies that can be reviewed without reading code. Perfect for organizations with strict **AI governance** requirements.
+
+### 📋 **Compliance Officers**  
+Complete audit trail of all AI policy changes. Run `git log guardrails.yaml` to show auditors exactly who changed what, when, and why.
+
+### 🔧 **Splunk Administrators**
+Deploy predictable AI that follows your organization's best practices instead of improvising dangerous queries.
+
+### 🛡️ **DevSecOps Teams**
+Implement **"shift-left" security** for AI with configuration-as-code that integrates seamlessly with your existing GitOps workflows.
 
 ## Deployment Options and Validation
 
@@ -59,15 +78,52 @@ We've designed this reference model to work in different environments and use ca
 
 To ensure reliability, we've built comprehensive validation into the reference model. Our automated testing covers security guardrails, deployment procedures, and cross-platform compatibility. We believe that trust in AI systems comes from transparent validation of their behavior.
 
-## Is This For You?
+## Use Cases: Real-World AI Security Scenarios
 
-This project is for you if you are a Splunk customer, administrator, or security professional who is:
+### 🚨 **"We need AI but can't risk data exposure"**
+**Solution:** Implement data masking and field filtering to ensure sensitive information never leaves your environment.
 
-*   Exploring how to use AI with Splunk in a secure and compliant way.
-*   Looking for a reference model or a set of patterns that you can adapt to your own environment.
-*   Interested in a "Configuration as Code" approach to managing AI security and governance.
+### ⚡ **"AI keeps creating expensive searches that impact performance"**  
+**Solution:** Built-in query efficiency controls and resource management prevent costly AI mistakes.
 
-This is not a "plug-and-play" solution, but rather a set of tools and patterns that we hope will be useful to the community.
+### 📊 **"Auditors want to see how we control our AI"**
+**Solution:** Version-controlled `guardrails.yaml` provides clear, auditable security policies that non-technical stakeholders can understand.
+
+### 🎯 **"We want consistent AI results, not random improvisation"**
+**Solution:** Prompt workflows ensure repeatable, predictable AI behavior aligned with your operational procedures.
+
+---
+
+## Why Choose This Over Splunk AI Assistant?
+
+| Challenge | Splunk AI Assistant | This Secure AI Gateway |
+|-----------|-------------------|----------------------|
+| **Security Control** | Limited guardrails | Comprehensive `guardrails.yaml` configuration |
+| **Audit Compliance** | Minimal audit trail | Complete git-based audit history |
+| **Data Protection** | Basic controls | Advanced data masking and field filtering |
+| **Query Efficiency** | AI improvises searches | Guided workflows prevent expensive queries |
+| **Customization** | Vendor-controlled | Open-source, fully customizable |
+| **Multi-LLM Support** | Single provider | OpenAI, Anthropic, Google Gemini support |
+
+**This is a production-ready reference implementation** that gives you the AI capabilities you want with the enterprise controls you need.
+
+## Quick Start: Get Secure AI Running in Minutes
+
+Ready to deploy **governable AI for Splunk** with enterprise-grade security? Our interactive setup guides you through:
+
+1. **Choose Your Deployment:** MCP-only integration, full web interface, or development environment
+2. **Configure Security Guardrails:** Set up `guardrails.yaml` with your data protection rules  
+3. **Connect Your LLM:** OpenAI, Anthropic Claude, or Google Gemini
+4. **Test Security Controls:** Validate that dangerous commands are blocked and sensitive data is masked
+
+```bash
+# Clone and run interactive setup
+git clone https://github.com/billebel/splunk-community-ai.git
+cd splunk-community-ai
+./scripts/deploy.sh  # Linux/Mac
+# or
+scripts/deploy.bat   # Windows
+```
 
 ## Prerequisites
 

@@ -11,6 +11,14 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Import Gemini enhancer
+try:
+    from gemini_content_enhancer import GeminiContentEnhancer
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+    print("Gemini enhancer not available - using basic content generation")
+
 def run_git_command(cmd):
     """Execute git command and return output."""
     try:
@@ -208,6 +216,7 @@ def main():
     
     commit_hash = os.getenv("COMMIT_HASH", os.getenv("GITHUB_SHA", "HEAD"))
     pr_number = os.getenv("PR_NUMBER")
+    use_gemini = os.getenv("USE_GEMINI_ENHANCEMENT", "true").lower() == "true"
     
     print(f"Generating blog post for commit: {commit_hash}")
     
@@ -219,8 +228,20 @@ def main():
     categories = analyze_changes(commit_details["files_changed"])
     print(f"Change categories: {categories}")
     
-    # Generate blog post content
+    # Generate basic blog post content
     content, filename = generate_blog_post_content(commit_details, categories, pr_number)
+    
+    # Enhance with Gemini if available and enabled
+    if use_gemini and GEMINI_AVAILABLE:
+        try:
+            enhancer = GeminiContentEnhancer()
+            enhanced_content = enhancer.enhance_blog_post(content, commit_details)
+            content = enhanced_content
+            print("✅ Content enhanced with Gemini AI")
+        except Exception as e:
+            print(f"⚠️ Gemini enhancement failed, using basic content: {e}")
+    elif use_gemini:
+        print("⚠️ Gemini enhancement requested but not available")
     
     # Write the blog post file
     blog_dir = Path("blog/_posts")
@@ -235,6 +256,52 @@ def main():
     print("=" * 50)
     print(content[:500] + "..." if len(content) > 500 else content)
     print("=" * 50)
+    
+    # Generate enhanced social media content if Gemini is available
+    if use_gemini and GEMINI_AVAILABLE:
+        try:
+            enhancer = GeminiContentEnhancer()
+            
+            # Extract title and excerpt from generated content
+            lines = content.split('\n')
+            title = ""
+            excerpt = ""
+            
+            in_front_matter = False
+            for line in lines:
+                if line.strip() == '---':
+                    in_front_matter = not in_front_matter
+                    continue
+                
+                if in_front_matter:
+                    if line.startswith('title:'):
+                        title = line.split(':', 1)[1].strip().strip('"').strip("'")
+                    elif line.startswith('excerpt:'):
+                        excerpt = line.split(':', 1)[1].strip().strip('"').strip("'")
+            
+            # Generate platform-specific content
+            platforms = ['twitter', 'reddit', 'linkedin']
+            social_content = {}
+            
+            for platform in platforms:
+                try:
+                    platform_content = enhancer.create_social_media_content(
+                        title, excerpt, list(categories.keys()), platform
+                    )
+                    social_content[platform] = platform_content
+                    print(f"✅ Generated {platform} content")
+                except Exception as e:
+                    print(f"⚠️ Failed to generate {platform} content: {e}")
+            
+            # Save social media content to a file for the social media script to use
+            social_file = blog_dir / f"social-{filename.replace('.md', '.json')}"
+            with open(social_file, 'w', encoding='utf-8') as f:
+                json.dump(social_content, f, indent=2)
+            
+            print(f"💬 Social media content saved: {social_file}")
+            
+        except Exception as e:
+            print(f"⚠️ Social media content generation failed: {e}")
 
 if __name__ == "__main__":
     main()

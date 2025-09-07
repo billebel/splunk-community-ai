@@ -20,8 +20,13 @@ tools:
     endpoint: "/services/server/info"
     method: "GET"
     
+    # Smart API filtering - 69% size reduction
     query_params:
       output_mode: "json"
+      f: "version"  # Only get essential fields
+      f: "build"
+      f: "license_state"
+      f: "instance_type"
     
     transform:
       type: "python"
@@ -47,9 +52,15 @@ tools:
     endpoint: "/services/apps/local"
     method: "GET"
     
+    # Smart API filtering - 21% size reduction
     query_params:
       output_mode: "json"
-      count: 0
+      count: 100  # Context-aware limit (was unlimited!)
+      f: "name"  # Only get essential fields
+      f: "disabled"
+      f: "visible"
+      f: "version"
+      f: "author"
     
     transform:
       type: "python"

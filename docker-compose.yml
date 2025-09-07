@@ -14,7 +14,6 @@ services:
       - SPLUNK_USER=${SPLUNK_USER}
       - SPLUNK_PASSWORD=${SPLUNK_PASSWORD}
     volumes:
-      - ./catalyst_mcp:/app/catalyst_mcp
       - ./knowledge-packs:/app/knowledge-packs
     restart: unless-stopped
     healthcheck:

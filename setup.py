@@ -1,4 +1,4 @@
-"""Setup script for Catalyst MCP Server."""
+"""Setup script for Splunk Community AI."""
 
 from setuptools import setup, find_packages
 
@@ -11,11 +11,14 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
         if line.strip() and not line.startswith("#") and not line.startswith("-e")
     ]
 
+# Add catalyst_mcp as a dependency from the external git repository
+requirements.append("catalyst_mcp @ git+https://github.com/billebel/catalyst_mcp.git")
+
 setup(
-    name="catalyst-mcp",
+    name="splunk-community-ai",
     version="1.0.0",
-    author="Catalyst Team",
-    description="Essential MCP server for Splunk integration with LibreChat",
+    author="Splunk Community AI Team",
+    description="Community-driven AI platform for Splunk integration with LibreChat",
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=find_packages(),
@@ -32,9 +35,4 @@ setup(
     ],
     python_requires=">=3.8",
     install_requires=requirements,
-    entry_points={
-        "console_scripts": [
-            "catalyst-mcp=catalyst_mcp.main:sync_main",
-        ],
-    },
 )

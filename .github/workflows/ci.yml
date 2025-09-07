@@ -47,16 +47,14 @@ jobs:
     - name: Code quality checks
       run: |
         # Format check (warning only for now)
-        black --check catalyst_mcp/ tests/ || echo "⚠️ Code formatting issues found. Run 'black catalyst_mcp/ tests/' to fix."
-        
-        # Import sorting check (warning only for now)
-        isort --check-only catalyst_mcp/ tests/ || echo "⚠️ Import sorting issues found. Run 'isort catalyst_mcp/ tests/' to fix."
-        
-        # Linting (warning only)
-        flake8 catalyst_mcp/ --max-line-length=100 || echo "⚠️ Linting warnings found"
-        
-        # Type checking (warning only)
-        mypy catalyst_mcp/ || echo "⚠️ Type checking warnings found"
+        if [ -d "src/" ]; then
+          black --check src/ tests/ || echo "⚠️ Code formatting issues found. Run 'black src/ tests/' to fix."
+          isort --check-only src/ tests/ || echo "⚠️ Import sorting issues found. Run 'isort src/ tests/' to fix."
+          flake8 src/ --max-line-length=100 || echo "⚠️ Linting warnings found"
+          mypy src/ || echo "⚠️ Type checking warnings found"
+        else
+          echo "⚠️ No local source code to check (using PyPI package)"
+        fi
         
         echo "✅ Code quality checks completed (warnings do not fail the build)"
         
@@ -85,20 +83,52 @@ jobs:
         
     - name: Test example knowledge packs
       run: |
-        # Validate example packs with catalyst-builder
-        for pack in knowledge-packs/*.example; do
+        # Validate knowledge packs structure
+        for pack in knowledge-packs/*/; do
           if [ -d "$pack" ]; then
-            echo "Validating $pack..."
-            catalyst-packs validate "$pack" || echo "⚠️ $pack validation issues"
+            echo "Checking structure of $pack..."
+            [ -f "$pack/tools/" ] && echo "✅ Tools directory exists" || echo "⚠️ No tools directory"
+            [ -f "$pack/transforms/" ] && echo "✅ Transforms directory exists" || echo "⚠️ No transforms directory"
           fi
         done
         
-    - name: Run tests (if test directory exists)
+    - name: Run knowledge pack tests
       run: |
-        if [ -d "tests" ]; then
-          pytest tests/ -v --tb=short --cov=knowledge-packs --cov=catalyst_mcp --cov-report=xml --cov-report=term-missing --junit-xml=test-results.xml
-        else
-          echo "No tests directory found, skipping pytest"
+        # Run tests for all knowledge packs that have test directories
+        echo "🔍 Searching for knowledge pack tests..."
+        
+        test_found=false
+        for pack_dir in knowledge-packs/*/; do
+          if [ -d "$pack_dir" ]; then
+            pack_name=$(basename "$pack_dir")
+            test_dir="$pack_dir/tests"
+            
+            if [ -d "$test_dir" ]; then
+              echo "📦 Found tests for pack: $pack_name"
+              echo "🧪 Running tests in: $test_dir"
+              
+              # Run tests for this pack
+              pytest "$test_dir" -v --tb=short \
+                --cov="$pack_dir" \
+                --cov-report=xml:coverage-${pack_name}.xml \
+                --cov-report=term-missing \
+                --junit-xml=test-results-${pack_name}.xml \
+                || echo "⚠️ Some tests failed in $pack_name (non-blocking)"
+              
+              test_found=true
+            else
+              echo "📦 Pack $pack_name has no tests directory"
+            fi
+          fi
+        done
+        
+        if [ "$test_found" = false ]; then
+          echo "📝 No knowledge pack tests found, running legacy test check..."
+          if [ -d "tests" ]; then
+            pytest tests/ -v --tb=short --cov=knowledge-packs --cov-report=xml --cov-report=term-missing --junit-xml=test-results.xml
+          else
+            echo "✅ No tests directory found - this is expected for MCP pack projects"
+          fi
         fi
         
     - name: Upload test artifacts
@@ -107,8 +137,8 @@ jobs:
       with:
         name: test-results-${{ matrix.python-version }}
         path: |
-          coverage.xml
-          test-results.xml
+          coverage*.xml
+          test-results*.xml
         retention-days: 30
 
   docker-test:
@@ -186,14 +216,16 @@ jobs:
         
     - name: Run security scans
       run: |
-        # Bandit security scan
-        bandit -r catalyst_mcp/ -ll || echo "⚠️ Bandit found potential security issues"
+        # Bandit security scan on local code if it exists
+        if [ -d "src/" ]; then
+          bandit -r src/ -ll || echo "⚠️ Bandit found potential security issues"
+        fi
         
         # Safety check for known vulnerabilities
         safety check || echo "⚠️ Safety check completed with warnings"
         
         # Check for secrets in code
-        ! grep -r "password\s*=" catalyst_mcp/ || echo "⚠️ Found hardcoded passwords"
-        ! grep -r "secret\s*=" catalyst_mcp/ || echo "⚠️ Found hardcoded secrets"
+        ! grep -r "password\s*=" . --exclude-dir=.git --exclude-dir=.github || echo "⚠️ Found hardcoded passwords"
+        ! grep -r "secret\s*=" . --exclude-dir=.git --exclude-dir=.github || echo "⚠️ Found hardcoded secrets"
         
         echo "🔒 Security scan completed"

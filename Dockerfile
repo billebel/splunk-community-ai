@@ -2,22 +2,23 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including git for pip install from git
 RUN apt-get update && apt-get install -y \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy application code
-COPY catalyst_mcp/ ./catalyst_mcp/
 COPY knowledge-packs/ ./knowledge-packs/
 COPY setup.py .
+COPY README.md .
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Create minimal README for setup.py
-RUN echo "# Catalyst MCP Server" > README.md
+# Install catalyst_mcp from the external git repository
+RUN pip install --no-cache-dir git+https://github.com/billebel/catalyst_mcp.git
 
 # Install the package
 RUN pip install -e .

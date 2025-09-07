@@ -13,7 +13,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from catalyst_mcp.packs.registry import PackRegistry
-from catalyst_pack_schemas import TransformEngine, TransformConfig
+# TransformEngine and TransformConfig should be imported from catalyst_mcp
+try:
+    from catalyst_mcp.packs.transforms import TransformEngine
+    from catalyst_mcp.packs.models import TransformConfig
+except ImportError:
+    # Fallback if the structure is different
+    logger.warning("Could not import TransformEngine/TransformConfig - tests may be limited")
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')

@@ -73,7 +73,7 @@ tools:
         description: "Maximum events to return"
     
     form_data:
-      search: "{search_query}"
+      search: "search {search_query}"
       earliest_time: "{earliest_time}"
       latest_time: "{latest_time}"
       count: "{max_results}"

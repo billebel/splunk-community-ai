@@ -73,7 +73,7 @@ tools:
         description: "Maximum events to return"
     
     form_data:
-      search: "search {search_query}"
+      search: "search {search_query} | table _time, _raw, index, sourcetype, source, host"
       earliest_time: "{earliest_time}"
       latest_time: "{latest_time}"
       count: "{max_results}"
@@ -84,9 +84,8 @@ tools:
       Content-Type: "application/x-www-form-urlencoded"
     
     transform:
-      type: "python"
-      file: "transforms/search.py"
-      function: "extract_search_results"
+      type: "jq"
+      expression: ".results"
 
 # Modular structure
 structure:

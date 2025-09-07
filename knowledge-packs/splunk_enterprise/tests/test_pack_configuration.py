@@ -40,11 +40,12 @@ class TestPackYAMLConfiguration:
         form_data = execute_search.get('form_data', {})
         assert form_data, "form_data section missing from execute_splunk_search"
         
-        # CRITICAL: Validate the search parameter includes the 'search' prefix
+        # CRITICAL: Validate the search parameter includes the 'search' prefix and field filtering
         search_param = form_data.get('search')
         assert search_param is not None, "search parameter missing from form_data"
-        assert search_param == "search {search_query}", \
-            f"search parameter should be 'search {{search_query}}', got: '{search_param}'"
+        expected_search = "search {search_query} | table _time, _raw, index, sourcetype, source, host"
+        assert search_param == expected_search, \
+            f"search parameter should include field filtering, got: '{search_param}'"
         
         # Validate other required parameters
         assert form_data.get('output_mode') == 'json', "output_mode should be 'json'"
@@ -242,10 +243,11 @@ class TestRegressionValidation:
         form_data = execute_search.get('form_data', {})
         search_param = form_data.get('search')
         
-        # CRITICAL: This must be exactly 'search {search_query}'
-        # Any change to this format will break Splunk API integration
-        assert search_param == 'search {search_query}', \
-            f"REGRESSION DETECTED: search parameter changed from 'search {{search_query}}' to '{search_param}'"
+        # CRITICAL: This must include 'search {search_query}' with field filtering
+        # The field filtering is essential for performance and clean responses
+        expected_search = 'search {search_query} | table _time, _raw, index, sourcetype, source, host'
+        assert search_param == expected_search, \
+            f"REGRESSION DETECTED: search parameter should include field filtering, got: '{search_param}'"
         
         # Additional validation to ensure the fix remains in place
         assert search_param.startswith('search '), \

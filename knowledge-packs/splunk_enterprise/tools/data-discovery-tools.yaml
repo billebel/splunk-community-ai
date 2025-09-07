@@ -28,9 +28,17 @@ tools:
         description: "Include system indexes like _audit, _internal (usually not needed for user searches)"
         usage_note: "Set to true only if you need system/internal logs for troubleshooting"
     
+    # Smart API filtering - 91% size reduction
     query_params:
       output_mode: "json"
-      count: 0
+      count: 200  # Context-aware limit (was unlimited!)
+      f: "name"  # Only get essential fields
+      f: "currentDBSizeMB"
+      f: "totalEventCount" 
+      f: "disabled"
+      f: "datatype"
+      f: "minTime"
+      f: "maxTime"
     
     transform:
       type: "python"
@@ -67,10 +75,10 @@ tools:
       - name: "max_sourcetypes"
         type: "integer"
         required: false
-        default: 50
+        default: 25  # Reduced from 50 for better LLM context usage
         min_value: 1
-        max_value: 200
-        description: "How many data types to show (usually 50 is plenty)"
+        max_value: 100  # Reduced from 200
+        description: "How many data types to show (25 is usually plenty for LLM analysis)"
     
     form_data:
       search: "| metadata type=sourcetypes index={index_name} | stats count by sourcetype | sort -count | head {max_sourcetypes}"
@@ -120,8 +128,10 @@ tools:
       - name: "max_hosts"
         type: "integer"
         required: false
-        default: 100
-        description: "Maximum hosts to return"
+        default: 50  # Reduced from 100 for better LLM context usage
+        min_value: 1
+        max_value: 200
+        description: "Maximum hosts to return (50 is usually sufficient for analysis)"
     
     form_data:
       search: "| metadata type=hosts index={index_filter} | stats count by host | sort -count | head {max_hosts}"

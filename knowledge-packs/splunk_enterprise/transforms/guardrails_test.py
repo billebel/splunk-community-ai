@@ -249,7 +249,7 @@ def get_guardrails_config(data: Dict[str, Any], variables: Optional[Dict[str, An
             'user_role_requested': variables.get('user_role', 'unknown')
         }
 
-def test_data_masking(data: Dict[str, Any], variables: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def simulate_data_masking(data: Dict[str, Any], variables: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Test data masking rules on sample data
     

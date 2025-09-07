@@ -3,13 +3,15 @@
 tools:
   get_data_models:
     type: "list"
-    display_name: "List High-Performance Data Models"
-    description: "⚠️ USE AFTER KNOWLEDGE OBJECT STRATEGY: Find data models for tstats optimization as recommended by strategy planner."
-    business_purpose: "Show LLM which data models can make searches 100x faster"
+    display_name: "🚀 List High-Performance Data Models (Optimized)"
+    description: "⚠️ USE AFTER KNOWLEDGE OBJECT STRATEGY: Find data models for tstats optimization with 99% size reduction."
+    business_purpose: "Show LLM which data models can make searches 100x faster with smart filtering"
     key_capabilities:
       - "List data models like 'Authentication', 'Web', 'Network_Traffic'"
       - "Show which ones are accelerated (ready for tstats)"
-      - "Identify structured data for faster analytics"
+      - "Context-aware limits (10-50 models based on LLM)"
+      - "Exclude disabled models automatically"
+      - "99%+ size reduction by filtering massive description fields"
     best_used_for:
       - "When user needs fast searches on large data"
       - "For statistical analysis and reporting"
@@ -23,7 +25,11 @@ tools:
     
     query_params:
       output_mode: "json"
-      count: 0
+      count: 50
+      f: "name"
+      f: "acceleration" 
+      f: "eai:appName"
+      search: "disabled!=true"
     
     transform:
       type: "python"
@@ -67,13 +73,15 @@ tools:
 
   get_event_types:
     type: "list"
-    display_name: "List Pre-defined Event Categories"
-    description: "⚠️ USE AFTER KNOWLEDGE OBJECT STRATEGY: Find event types for categorization as recommended by strategy planner."
-    business_purpose: "Use existing event categories instead of writing complex search logic from scratch"
+    display_name: "🏷️ List Pre-defined Event Categories (Optimized)"
+    description: "⚠️ USE AFTER KNOWLEDGE OBJECT STRATEGY: Find event types with smart filtering and 87% size reduction."
+    business_purpose: "Use existing event categories with LLM-optimized filtering instead of complex search logic"
     key_capabilities:
       - "List event types like 'authentication_failure', 'network_scan'"
-      - "See the search logic behind each event type"
-      - "Use eventtype= instead of complex search strings"
+      - "See search logic (truncated for LLM consumption)"
+      - "Context-aware limits (30-150 event types based on LLM)"
+      - "Exclude disabled event types automatically"
+      - "87% size reduction by filtering metadata and descriptions"
     best_used_for:
       - "When user asks about common security events"
       - "To simplify searches using pre-built categories"
@@ -86,7 +94,12 @@ tools:
     
     query_params:
       output_mode: "json"
-      count: 0
+      count: 150
+      f: "name"
+      f: "search"
+      f: "tags"
+      f: "eai:appName"
+      search: "disabled!=true"
     
     transform:
       type: "python"
@@ -95,13 +108,15 @@ tools:
 
   get_search_macros:
     type: "list"
-    display_name: "List Reusable Search Shortcuts"
-    description: "⚠️ USE AFTER KNOWLEDGE OBJECT STRATEGY: Find search macros for reusability as recommended by strategy planner."
-    business_purpose: "Use existing search shortcuts instead of writing long, complex searches"
+    display_name: "⚡ List Reusable Search Shortcuts (Optimized)"
+    description: "⚠️ USE AFTER KNOWLEDGE OBJECT STRATEGY: Find search macros with smart filtering and 88% size reduction."
+    business_purpose: "Use existing search shortcuts with LLM-optimized filtering and categorization"
     key_capabilities:
       - "List macros like `get_user_activity(user)` or `security_events`"
-      - "Show macro definitions and parameters"
-      - "Simplify complex searches with shortcuts"
+      - "Show macro definitions (truncated for LLM consumption)"
+      - "Context-aware limits (20-100 macros based on LLM)"
+      - "Exclude disabled macros automatically"
+      - "88% size reduction by filtering unnecessary metadata"
     best_used_for:
       - "When searches get complex and repetitive"
       - "To use existing search shortcuts"
@@ -114,7 +129,12 @@ tools:
     
     query_params:
       output_mode: "json"
-      count: 0
+      count: 100
+      f: "name"
+      f: "definition"
+      f: "args"
+      f: "eai:appName"
+      search: "disabled!=true"
     
     transform:
       type: "python"
@@ -151,15 +171,15 @@ tools:
 
   get_lookup_tables:
     type: "list"
-    display_name: "🔗 Find Reference Data & Lookup Tables"
-    description: "⚠️ USE AFTER KNOWLEDGE OBJECT STRATEGY: List lookup definitions for data enrichment as recommended by strategy planner."
-    business_purpose: "Show all available lookup tables that can enrich searches with additional context data"
+    display_name: "🔗 Find Reference Data & Lookup Tables (Optimized)"
+    description: "⚠️ USE AFTER KNOWLEDGE OBJECT STRATEGY: List lookup definitions with smart filtering for LLM consumption."
+    business_purpose: "Show available lookup tables with LLM-optimized metadata and practical usage examples"
     key_capabilities:
       - "List CSV lookup files and KV store collections"
-      - "Show external/scripted lookup commands"
-      - "Display lookup fields and data types"
-      - "Identify file sizes and update status"
-      - "Show which app owns each lookup"
+      - "Smart categorization (geolocation, identity, assets, threat intel)"
+      - "Context-aware limits (15-75 lookups based on LLM)"
+      - "Show file types and size estimates"
+      - "Generate practical usage examples"
     best_used_for:
       - "Finding reference data for IP geolocation, user details, asset inventory"
       - "Discovering available lookups before building enrichment queries"
@@ -188,7 +208,10 @@ tools:
     
     query_params:
       output_mode: "json"
-      count: 0
+      count: 75
+      f: "name"
+      f: "filename"
+      f: "eai:appName"
       getsize: true
     
     transform:

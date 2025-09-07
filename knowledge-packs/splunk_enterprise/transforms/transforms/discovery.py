@@ -11,14 +11,14 @@ logger = logging.getLogger(__name__)
 
 def extract_indexes(data: Dict[str, Any], variables: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
-    Extract index information for data source discovery
+    Extract index information - SIMPLIFIED since API pre-filters data
     
     Args:
-        data: Splunk /services/data/indexes response
+        data: Pre-filtered Splunk response (f=name&f=currentDBSizeMB&f=totalEventCount&f=disabled&f=datatype&f=minTime&f=maxTime)
         variables: Parameters (include_internal, etc.)
         
     Returns:
-        Clean list of available indexes with metadata
+        Clean list of available indexes with minimal processing needed
     """
     try:
         variables = variables or {}
@@ -28,50 +28,37 @@ def extract_indexes(data: Dict[str, Any], variables: Optional[Dict[str, Any]] = 
         indexes = []
         
         for entry in entries:
-            if not isinstance(entry, dict):
-                continue
-                
-            index_name = entry.get('name', 'unknown')
             content = entry.get('content', {})
+            index_name = entry.get('name', 'unknown')
             
-            # Filter internal indexes unless requested
+            # Simple filter for internal indexes
             if not include_internal and index_name.startswith('_'):
                 continue
             
+            # Simple extraction - API already filtered for us
             index_info = {
                 'name': index_name,
+                'current_size_mb': _safe_int(content.get('currentDBSizeMB', 0)),
+                'total_event_count': _safe_int(content.get('totalEventCount', 0)),
                 'disabled': content.get('disabled', False),
                 'data_type': content.get('datatype', 'event'),
-                'current_size_mb': _safe_int(content.get('currentDBSizeMB', 0)),
-                'max_size': content.get('maxDataSize', 'auto'),
-                'total_event_count': _safe_int(content.get('totalEventCount', 0)),
-                'is_internal': index_name.startswith('_'),
                 'earliest_time': content.get('minTime', ''),
-                'latest_time': content.get('maxTime', '')
+                'latest_time': content.get('maxTime', ''),
+                'is_internal': index_name.startswith('_')
             }
             
             indexes.append(index_info)
         
-        # Sort by size (largest first), then alphabetically
+        # API already handles most filtering - simple sort by size
         indexes.sort(key=lambda x: (-x['current_size_mb'], x['name']))
         
         return {
             'success': True,
             'indexes': indexes,
             'count': len(indexes),
-            'summary': {
-                'total_indexes': len(indexes),
-                'internal_count': sum(1 for idx in indexes if idx['is_internal']),
-                'external_count': sum(1 for idx in indexes if not idx['is_internal']),
-                'disabled_count': sum(1 for idx in indexes if idx['disabled']),
-                'total_size_mb': sum(idx['current_size_mb'] for idx in indexes),
-                'largest_index': indexes[0]['name'] if indexes else None
-            },
-            'usage_guidance': {
-                'common_security_indexes': [idx['name'] for idx in indexes if any(term in idx['name'].lower() for term in ['security', 'auth', 'firewall', 'ids', 'windows'])],
-                'common_system_indexes': [idx['name'] for idx in indexes if any(term in idx['name'].lower() for term in ['system', 'os', 'linux', 'unix', 'main'])],
-                'largest_indexes': [idx['name'] for idx in indexes[:5]]  # Top 5 by size
-            }
+            'total_size_mb': sum(idx['current_size_mb'] for idx in indexes),
+            'largest_indexes': [idx['name'] for idx in indexes[:5]],
+            'usage_guidance': f"Found {len(indexes)} indexes. Largest: {indexes[0]['name'] if indexes else 'none'}"
         }
         
     except Exception as e:

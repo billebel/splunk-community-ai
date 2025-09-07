@@ -101,25 +101,28 @@ def extract_search_results(data: Dict[str, Any], variables: Optional[Dict[str, A
                 }
             }
         
-        # Clean events for LLM consumption
+        # Clean events for LLM consumption - only essential fields
         cleaned_events = []
+        essential_fields = ['_time', '_raw', 'index', 'sourcetype', 'source', 'host']
+        
         for event in results:
             if isinstance(event, dict):
-                # Keep all fields but organize them logically
                 cleaned_event = {}
                 
-                # Always include timestamp first if available
-                if '_time' in event:
-                    cleaned_event['timestamp'] = event['_time']
-                
-                # Include essential fields
-                for field in ['host', 'source', 'sourcetype', 'index']:
+                # Include only the essential fields
+                for field in essential_fields:
                     if field in event:
-                        cleaned_event[field] = event[field]
+                        # Rename _time to timestamp for clarity
+                        if field == '_time':
+                            cleaned_event['timestamp'] = event[field]
+                        else:
+                            cleaned_event[field] = event[field]
                 
-                # Add all other fields (excluding internal underscore fields)
+                # Add any other non-underscore fields (but not the verbose internal ones)
                 for key, value in event.items():
-                    if not key.startswith('_') and key not in cleaned_event:
+                    if (not key.startswith('_') and 
+                        key not in ['index', 'sourcetype', 'source', 'host'] and
+                        key not in cleaned_event):
                         cleaned_event[key] = value
                 
                 cleaned_events.append(cleaned_event)

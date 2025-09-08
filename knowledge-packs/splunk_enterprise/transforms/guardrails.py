@@ -12,6 +12,31 @@ import hashlib
 import unicodedata
 import urllib.parse
 
+try:
+    from .exceptions import (
+        ConfigurationError, SecurityViolation, DataMaskingError,
+        raise_config_error, raise_security_violation
+    )
+except ImportError:
+    # Handle case when imported directly (not as package)
+    try:
+        from exceptions import (
+            ConfigurationError, SecurityViolation, DataMaskingError,
+            raise_config_error, raise_security_violation
+        )
+    except ImportError:
+        # Fallback to built-in exceptions if custom ones aren't available
+        class ConfigurationError(Exception):
+            pass
+        class SecurityViolation(Exception):
+            pass
+        class DataMaskingError(Exception):
+            pass
+        def raise_config_error(op, path=None, err=None):
+            raise ConfigurationError(f"Config {op} failed")
+        def raise_security_violation(vtype, query, role=None, reason=None):
+            raise SecurityViolation(f"Security violation: {vtype}")
+
 logger = logging.getLogger(__name__)
 
 class GuardrailsEngine:
@@ -52,31 +77,61 @@ class GuardrailsEngine:
                 
             return config
             
-        except Exception as e:
-            logger.error(f"Failed to load guardrails config: {str(e)}, using fail-safe defaults")
+        except FileNotFoundError:
+            logger.warning(f"Guardrails config file not found: {self.config_path}")
+            return self._get_fail_safe_config()
+        except PermissionError:
+            logger.error(f"Permission denied reading guardrails config: {self.config_path}")
+            raise_config_error("load", self.config_path, PermissionError("Permission denied"))
+        except yaml.YAMLError as e:
+            logger.error(f"Invalid YAML in guardrails config: {e}")
+            raise_config_error("parse", self.config_path, e)
+        except OSError as e:
+            logger.error(f"IO error reading guardrails config: {e}")
             return self._get_fail_safe_config()
     
     def _get_fail_safe_config(self) -> Dict[str, Any]:
-        """Ultra-restrictive fail-safe configuration"""
+        """Load externalized ultra-restrictive fail-safe configuration"""
+        fail_safe_path = os.path.join(
+            os.path.dirname(__file__), '..', 'config', 'fail_safe_defaults.yaml'
+        )
+        
+        try:
+            with open(fail_safe_path, 'r') as f:
+                config = yaml.safe_load(f)
+            logger.critical("FAIL-SAFE MODE ACTIVE: Using emergency security defaults from external config")
+            return config
+        except FileNotFoundError:
+            logger.critical(f"Fail-safe config file missing: {fail_safe_path}")
+            return self._get_minimal_hardcoded_config()
+        except yaml.YAMLError as e:
+            logger.critical(f"Fail-safe config YAML error: {e}")
+            return self._get_minimal_hardcoded_config()
+        except Exception as e:
+            logger.critical(f"Fail-safe config load failed: {e}")
+            return self._get_minimal_hardcoded_config()
+    
+    def _get_minimal_hardcoded_config(self) -> Dict[str, Any]:
+        """Absolute minimal hardcoded config when even fail-safe file fails"""
+        logger.critical("EMERGENCY LOCKDOWN: Using minimal hardcoded defaults - ALL QUERIES BLOCKED")
         return {
-            'guardrails': {'enabled': True, 'fail_safe_mode': True},
+            'guardrails': {'enabled': True, 'fail_safe_mode': True, 'emergency_lockdown': True},
             'security': {
-                'blocked_commands': [
-                    '|delete', '|outputlookup', '|outputcsv', '|sendemail', 
-                    '|script', '|external', '|savedsearch'
-                ],
-                'blocked_patterns': [
-                    'index\\s*=\\s*\\*', 'search\\s+\\*', 'earliest\\s*=\\s*0'
-                ]
+                'blocked_commands': ['*'],  # Block everything
+                'blocked_patterns': [{'pattern': '.*', 'reason': 'Emergency lockdown mode'}]
             },
             'performance': {
-                'time_limits': {'max_time_range_days': 1, 'default_time_range': '-1h'},
-                'result_limits': {'max_results_per_search': 100, 'default_result_limit': 50},
-                'execution_limits': {'search_timeout_seconds': 60}
+                'time_limits': {'max_time_range_days': 0},
+                'result_limits': {'max_results_per_search': 0},
+                'execution_limits': {'search_timeout_seconds': 1}
             },
             'privacy': {
-                'data_masking': {'enabled': True},
-                'sensitive_fields': ['password', 'token', 'secret', 'ssn', 'email']
+                'data_masking': {'enabled': True, 'mask_all': True},
+                'sensitive_fields': ['*']  # Mask everything
+            },
+            'emergency': {
+                'message': 'System in emergency lockdown. Contact administrator immediately.',
+                'contact_required': True
             }
         }
     
@@ -149,13 +204,16 @@ class GuardrailsEngine:
             
             return validation_result
             
+        except (ConfigurationError, SecurityViolation) as e:
+            # Re-raise our own exceptions
+            raise
         except Exception as e:
-            logger.error(f"Search validation failed: {str(e)}")
-            # Fail-safe: Block the search if validation fails
+            logger.error(f"Unexpected error during search validation: {str(e)}")
+            # Fail-safe: Block the search if validation fails unexpectedly
             return {
                 'allowed': False,
                 'blocked': True,
-                'violations': [f"Validation system error: {str(e)}"],
+                'violations': [f"System error during validation: {type(e).__name__}"],
                 'enforcement_level': 'blocked',
                 'block_reason': 'System error'
             }
@@ -583,12 +641,17 @@ class GuardrailsEngine:
         except Exception as e:
             logger.error(f"Audit logging failed: {str(e)}")
 
-# Global guardrails engine instance
-_guardrails_engine = None
+# DEPRECATED: Global instance replaced with dependency injection
+# Import services module for backwards compatibility
 
 def get_guardrails_engine() -> GuardrailsEngine:
-    """Get global guardrails engine instance"""
-    global _guardrails_engine
-    if _guardrails_engine is None:
-        _guardrails_engine = GuardrailsEngine()
-    return _guardrails_engine
+    """Get guardrails engine instance via dependency injection
+    
+    DEPRECATED: This function is maintained for backwards compatibility.
+    New code should use services.get_guardrails_engine() instead.
+    """
+    # Import here to avoid circular imports
+    from .services import ensure_services_configured, get_guardrails_engine as get_service
+    
+    ensure_services_configured()
+    return get_service()

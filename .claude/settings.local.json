@@ -32,7 +32,10 @@
       "Bash(gh run view:*)",
       "Bash(python -m pytest tests/deployment/test_configuration.py::TestDockerComposeEnvironmentIntegration::test_compose_files_use_env_vars -v)",
       "Bash(python -m pytest tests/e2e/test_quick_start.py::TestCommonUserMistakes::test_port_conflicts_guidance -v)",
-      "Bash(python -m pytest tests/ -v --tb=short)"
+      "Bash(python -m pytest tests/ -v --tb=short)",
+      "Bash(python -m pytest tests/ --tb=no -x)",
+      "Bash(python -m pytest tests/ --tb=no -q)",
+      "Bash(python -m pytest tests/test_integration.py::TestCompleteDiscoveryWorkflow::test_full_environment_discovery -v)"
     ],
     "deny": [],
     "ask": []

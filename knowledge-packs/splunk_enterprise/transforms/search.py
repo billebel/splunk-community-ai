@@ -8,6 +8,20 @@ import logging
 import os
 import sys
 import importlib.util
+try:
+    from .exceptions import SplunkAPIError, DataTransformError, SecurityViolation
+except ImportError:
+    # Handle case when imported directly
+    try:
+        from exceptions import SplunkAPIError, DataTransformError, SecurityViolation
+    except ImportError:
+        # Fallback to standard exceptions
+        class SplunkAPIError(Exception):
+            pass
+        class DataTransformError(Exception):
+            pass
+        class SecurityViolation(Exception):
+            pass
 
 # Add transforms directory to path for imports
 transforms_dir = os.path.dirname(__file__)
@@ -161,19 +175,25 @@ def extract_search_results(data: Dict[str, Any], variables: Optional[Dict[str, A
         
         return final_result
         
+    except SecurityViolation as e:
+        # Re-raise security violations
+        raise
+    except (KeyError, TypeError, AttributeError) as e:
+        logger.error(f"Data structure error in search result extraction: {str(e)}")
+        raise DataTransformError(f"Invalid search result format: {str(e)}", "extract_search_results")
     except Exception as e:
-        logger.error(f"Search result extraction failed: {str(e)}")
+        logger.error(f"Unexpected error during search result extraction: {str(e)}")
         return {
             'success': False,
-            'error': str(e),
+            'error': f"System error: {type(e).__name__}",
             'events': [],
             'count': 0,
             'search_info': {
                 'query': variables.get('search_query', ''),
-                'error_context': 'Failed to process search results'
+                'error_context': 'Unexpected system error during processing'
             },
             'guardrails_info': {
-                'error': 'Guardrails processing failed'
+                'error': 'System error in guardrails processing'
             }
         }
 

@@ -1,0 +1,162 @@
+# Fail-Safe Security Configuration
+# Ultra-restrictive emergency defaults used when main guardrails.yaml fails to load
+# This file should be treated as security-critical code and version controlled
+
+fail_safe_mode: true
+description: "Emergency security defaults - blocks most operations to ensure safety"
+version: "1.0"
+last_updated: "2025-09-08"
+
+# Core guardrails settings
+guardrails:
+  enabled: true
+  fail_safe_mode: true
+  enforcement_level: 'strict'
+  emergency_lockdown: true
+
+# Security controls - very restrictive
+security:
+  blocked_commands:
+    - '|delete'           # Data deletion
+    - '|outputlookup'     # Write to lookups
+    - '|outputcsv'        # Write CSV files
+    - '|sendemail'        # Send emails
+    - '|script'           # Execute scripts
+    - '|external'         # External commands
+    - '|savedsearch'      # Save searches
+    - '|rest'             # REST API calls  
+    - '|collect'          # Write to summary indexes
+    - '|dump'             # Export data
+    - '|inputlookup'      # In fail-safe mode, even reads are restricted
+    - '|map'              # Potentially dangerous iteration
+    - '|foreach'          # Dynamic field operations
+    - '|append'           # Data modification
+    - '|appendcols'       # Data modification
+    - '|join'             # Potentially expensive operations
+    - '|transaction'      # Memory intensive operations
+    
+  blocked_patterns:
+    - pattern: 'index\s*=\s*\*'
+      reason: 'Prevents expensive cross-index searches'
+      severity: 'high'
+    - pattern: 'search\s+\*'
+      reason: 'Prevents broad wildcard searches'
+      severity: 'high'  
+    - pattern: 'earliest\s*=\s*0'
+      reason: 'Prevents unlimited time range searches'
+      severity: 'high'
+    - pattern: 'earliest\s*=\s*@d'
+      reason: 'Prevents day-long searches in emergency mode'
+      severity: 'medium'
+    - pattern: '\|\s*eval.*\|\s*\w+'
+      reason: 'Prevents dynamic command construction via eval'
+      severity: 'critical'
+    - pattern: 'sourcetype\s*=\s*\*'
+      reason: 'Prevents broad sourcetype searches'  
+      severity: 'medium'
+
+# Performance limits - very conservative  
+performance:
+  time_limits:
+    max_time_range_days: 1
+    default_time_range: '-1h'
+    absolute_max_hours: 24
+    
+  result_limits:
+    max_results_per_search: 10    # Very low limit in fail-safe
+    default_result_limit: 5
+    absolute_max_results: 50
+    
+  execution_limits:
+    search_timeout_seconds: 30     # Short timeout in emergency
+    max_concurrent_searches: 1
+    memory_limit_mb: 100
+
+# Privacy and data protection - maximum protection
+privacy:
+  data_masking:
+    enabled: true
+    aggressive_mode: true          # Mask everything possible
+    mask_unknown_fields: true     # Err on side of caution
+    
+  sensitive_fields:
+    - 'password'
+    - 'passwd'  
+    - 'secret'
+    - 'token'
+    - 'api_key'
+    - 'ssn'
+    - 'social_security'
+    - 'credit_card'
+    - 'email'
+    - 'username'
+    - 'user'
+    - 'account'
+    - 'login'
+    - 'session'
+    - 'cookie'
+    - 'auth'
+    - 'key'
+    - 'id'
+    - 'phone'
+    - 'address'
+    
+  masking_patterns:
+    - pattern: '\b\d{3}-\d{2}-\d{4}\b'     # SSN
+      replacement: '[SSN_MASKED]'
+    - pattern: '\b\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\b'  # Credit card
+      replacement: '[CC_MASKED]'
+    - pattern: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'  # Email
+      replacement: '[EMAIL_MASKED]'
+    - pattern: '\b(?:\d{1,3}\.){3}\d{1,3}\b'  # IP addresses (in fail-safe mode)
+      replacement: '[IP_MASKED]'
+
+# Role-based restrictions - everyone is restricted in fail-safe mode
+role_overrides:
+  admin:
+    allowed: false              # Even admins are restricted
+    max_results: 0
+    time_range_days: 0
+    
+  security_analyst:
+    allowed: false
+    max_results: 0
+    time_range_days: 0
+    
+  standard_user:  
+    allowed: false
+    max_results: 0
+    time_range_days: 0
+    
+  guest:
+    allowed: false
+    max_results: 0
+    time_range_days: 0
+
+# Emergency contact and escalation
+emergency:
+  contact_admin: true
+  log_all_attempts: true  
+  alert_on_usage: true
+  escalation_required: true
+  
+  messages:
+    user_blocked: "System in emergency mode. All queries blocked for security."
+    admin_notification: "Guardrails fail-safe mode active. Main configuration failed to load."
+    recovery_steps: "Check guardrails.yaml file permissions, syntax, and availability."
+
+# Audit and logging - comprehensive in fail-safe mode
+audit:
+  enabled: true
+  log_level: 'debug'
+  log_all_queries: true
+  log_blocked_queries: true  
+  log_violations: true
+  include_user_context: true
+  retention_days: 365
+
+# Recovery settings
+recovery:
+  allow_config_reload: false    # Don't allow dynamic reload in fail-safe
+  require_restart: true         # Require service restart to exit fail-safe
+  validation_required: true     # Require config validation before accepting new config

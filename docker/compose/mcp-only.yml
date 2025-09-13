@@ -1,0 +1,21 @@
+# MCP Server Only Deployment - No Web Interface
+# Usage: docker compose -f docker/docker-compose.base.yml -f docker/compose/mcp-only.yml up
+
+version: '3.8'
+
+services:
+  catalyst-mcp:
+    # Use base configuration with optimizations for standalone use
+    environment:
+      - MCP_STANDALONE=true
+    # Remove dependencies on LibreChat services
+    
+  # Exclude LibreChat and related services
+  librechat:
+    profiles: ["web-ui"]  # Excluded by default
+    
+  mongodb:
+    profiles: ["web-ui"]  # Excluded by default
+    
+  meilisearch:
+    profiles: ["web-ui"]  # Excluded by default

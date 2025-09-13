@@ -1,0 +1,55 @@
+# Catalyst MCP + LibreChat - Simplified 2025 Configuration
+services:
+  catalyst-mcp:
+    build: .
+    container_name: catalyst-mcp
+    ports:
+      - "${MCP_PORT:-8443}:8443"
+    env_file:
+      - .env
+    environment:
+      - MCP_PORT=8443
+      - MCP_TRANSPORT=http
+      - SPLUNK_URL=${SPLUNK_URL:-https://host.docker.internal:8089}
+      - SPLUNK_USER=${SPLUNK_USER}
+      - SPLUNK_PASSWORD=${SPLUNK_PASSWORD}
+    volumes:
+      - ./knowledge-packs:/app/knowledge-packs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8443/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  librechat:
+    image: ghcr.io/danny-avila/librechat:latest
+    container_name: librechat
+    restart: unless-stopped
+    ports:
+      - "3080:3080"
+    env_file:
+      - .env
+    environment:
+      - HOST=0.0.0.0
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongodb:27017/LibreChat
+      - ENDPOINTS=google,anthropic,agents,assistants
+      - GOOGLE_SEARCH_API_KEY=${GOOGLE_SEARCH_API_KEY:-}
+    volumes:
+      - ./librechat.yaml:/app/librechat.yaml:ro
+      - librechat-uploads:/app/client/public/images
+    depends_on:
+      - catalyst-mcp
+      - mongodb
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: unless-stopped
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  librechat-uploads:
+  mongodb_data:

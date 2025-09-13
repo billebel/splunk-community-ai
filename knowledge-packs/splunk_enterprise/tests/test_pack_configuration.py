@@ -219,6 +219,108 @@ class TestTransformConfiguration:
             assert nested_path.exists(), f"Nested transform file missing: {transform}"
 
 
+class TestAuthenticationIntegration:
+    """Test authentication integration with pack configuration"""
+    
+    @pytest.fixture
+    def pack_config(self):
+        """Load the pack.yaml configuration"""
+        pack_path = Path(__file__).parent.parent / "pack.yaml"
+        with open(pack_path, 'r', encoding='utf-8') as f:
+            return yaml.safe_load(f)
+    
+    def test_pack_yaml_supports_all_auth_methods(self, pack_config):
+        """Test that pack.yaml can work with all authentication methods"""
+        # The pack.yaml should be flexible enough to work with any auth method
+        # since authentication is handled at the MCP server level
+        
+        # Connection should use environment variable placeholders
+        connection = pack_config.get('connection', {})
+        assert connection, "pack.yaml missing connection configuration"
+        
+        auth_config = connection.get('auth', {}).get('config', {})
+        assert auth_config, "pack.yaml missing auth configuration"
+        
+        # Should support dynamic configuration via environment variables
+        auth_str = str(auth_config)
+        has_env_vars = ('{SPLUNK_USER}' in auth_str or 
+                       '{SPLUNK_TOKEN}' in auth_str or 
+                       '{SPLUNK_PASSWORD}' in auth_str)
+        assert has_env_vars, "pack.yaml should use environment variable placeholders for credentials"
+    
+    def test_template_pack_files_valid_yaml(self):
+        """Test that all pack template files are valid YAML"""
+        project_root = Path(__file__).parent.parent.parent.parent
+        template_dir = project_root / "templates" / "pack"
+        
+        for auth_method in ['basic', 'token', 'passthrough']:
+            template_file = template_dir / f"pack.template.{auth_method}.yaml"
+            if template_file.exists():
+                with open(template_file, 'r', encoding='utf-8') as f:
+                    config = yaml.safe_load(f)  # Should not raise exception
+                    assert isinstance(config, dict), f"Invalid YAML in {template_file}"
+                    assert 'connection' in config, f"Missing connection in {template_file}"
+                    
+                    # Validate auth method specific configuration
+                    auth = config['connection']['auth']
+                    if auth_method == 'basic':
+                        assert 'username' in auth['config'], f"Basic auth missing username in {template_file}"
+                        assert 'password' in auth['config'], f"Basic auth missing password in {template_file}"
+                    elif auth_method == 'token':
+                        # Token auth should use bearer or custom auth
+                        assert auth['method'] in ['bearer', 'custom'], f"Token auth should use bearer/custom in {template_file}"
+    
+    def test_librechat_templates_valid_yaml(self):
+        """Test that LibreChat template files are valid YAML"""
+        project_root = Path(__file__).parent.parent.parent.parent
+        template_dir = project_root / "templates" / "librechat"
+        
+        for auth_method in ['basic', 'token', 'passthrough']:
+            template_file = template_dir / f"librechat.template.{auth_method}.yaml"
+            if template_file.exists():
+                with open(template_file, 'r', encoding='utf-8') as f:
+                    config = yaml.safe_load(f)  # Should not raise exception
+                    assert isinstance(config, dict), f"Invalid LibreChat YAML in {template_file}"
+                    
+                    # Should have endpoints configuration
+                    assert 'endpoints' in config, f"LibreChat template missing endpoints in {template_file}"
+                    
+                    # Should have custom endpoint for MCP
+                    endpoints = config['endpoints']
+                    # Check if 'custom' key exists in endpoints
+                    has_custom_key = 'custom' in endpoints
+                    # Or check if 'mcpServers' exists (alternative MCP integration)
+                    has_mcp_servers = 'mcpServers' in config
+                    # Or check for any MCP-related content
+                    content_str = str(config).lower()
+                    has_mcp_content = 'mcp' in content_str or 'catalyst' in content_str
+                    
+                    assert has_custom_key or has_mcp_servers or has_mcp_content, \
+                        f"LibreChat template should have custom/MCP endpoint in {template_file}"
+    
+    def test_auth_method_environment_variable_usage(self, pack_config):
+        """Test that pack configuration properly uses authentication environment variables"""
+        connection = pack_config['connection']
+        auth_config = connection['auth']['config']
+        
+        # Should reference environment variables, not hardcoded values
+        for key, value in auth_config.items():
+            if isinstance(value, str):
+                # Should be environment variable reference, not literal
+                if value and not value.startswith('{'):
+                    # If not an env var, should be a safe default like empty string
+                    assert value in ['', 'localhost', 'http://localhost'], \
+                        f"Auth config '{key}' should use environment variables, not hardcoded value: '{value}'"
+    
+    def test_connection_base_url_configuration(self, pack_config):
+        """Test that connection base_url supports environment variable substitution"""
+        connection = pack_config['connection']
+        base_url = connection.get('base_url', '')
+        
+        # Should use SPLUNK_URL environment variable
+        assert '{SPLUNK_URL}' in base_url, "Connection base_url should use {SPLUNK_URL} environment variable"
+
+
 class TestRegressionValidation:
     """Regression validation tests"""
     

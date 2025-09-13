@@ -1,0 +1,93 @@
+# Splunk Community Pack - Basic Authentication Template
+# Auto-generated from deployment script
+
+metadata:
+  name: "splunk_community"
+  version: "2.0.0"
+  description: "Splunk integration with basic authentication"
+  vendor: "Community"
+  license: "MIT"
+  compatibility: "^2.0.0"
+  domain: "security_analytics"
+  category: "SIEM"
+  keywords: ["splunk", "security", "logs", "siem", "search"]
+  
+  # LLM optimization flags
+  tool_calling_optimized: true
+  modular_tools: true
+  discovery_focused: true
+
+connection:
+  type: "rest"
+  base_url: "{SPLUNK_URL}"
+  auth:
+    method: "basic"
+    config:
+      username: "{SPLUNK_USER}"
+      password: "{SPLUNK_PASSWORD}"
+  timeout: 30
+  verify_ssl: false
+
+# Core search tool
+tools:
+  execute_splunk_search:
+    type: "search"  
+    display_name: "🔍 Execute Splunk Search Query"
+    description: "⚠️ USE AFTER GUIDED SEARCH: Run SPL queries against Splunk with basic auth"
+    endpoint: "/services/search/jobs/oneshot"
+    method: "POST"
+    
+    parameters:
+      - name: "search_query"
+        type: "string"
+        required: true
+        description: "Complete SPL search query to execute"
+        
+      - name: "earliest_time"
+        type: "string"
+        required: false
+        default: "-1h"
+        description: "Search start time"
+        
+      - name: "latest_time"
+        type: "string"
+        required: false
+        default: "now"
+        description: "Search end time"
+        
+      - name: "max_results"
+        type: "integer"
+        required: false
+        default: 100
+        min_value: 1
+        max_value: 1000
+        description: "Maximum events to return"
+    
+    form_data:
+      search: "search {search_query} | table _time, _raw, index, sourcetype, source, host"
+      earliest_time: "{earliest_time}"
+      latest_time: "{latest_time}"
+      count: "{max_results}"
+      output_mode: "json"
+      exec_mode: "oneshot"
+    
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    
+    transform:
+      type: "jq"
+      expression: ".results"
+
+# Modular structure
+structure:
+  tools:
+    - "tools/data-discovery-tools.yaml"
+    - "tools/guardrails-tools.yaml"
+    - "tools/knowledge-objects-tools.yaml" 
+    - "tools/system-info-tools.yaml"
+  prompts:
+    - "prompts/search-prompts.yaml"
+    - "prompts/dashboard-prompts.yaml"
+    - "prompts/scheduled-search-prompts.yaml"
+    - "prompts/knowledge-objects-prompts.yaml"
+    - "prompts/system-diagnostics-prompts.yaml"

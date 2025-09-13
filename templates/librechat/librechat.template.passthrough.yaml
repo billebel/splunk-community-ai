@@ -1,0 +1,101 @@
+version: 1.2.8
+cache: true
+endpoints:
+  google:
+    models:
+      default:
+      - gemini-2.5-flash
+      - gemini-2.5-flash-lite
+      - gemini-2.5-pro
+      fetch: false
+  anthropic:
+    titleConvo: true
+    titleModel: claude-3-5-haiku-20241022
+    models:
+      default:
+      - claude-3-5-haiku-20241022
+      - claude-3-5-sonnet-20241022
+      - claude-3-opus-20240229
+      fetch: false
+  # Custom endpoint for direct MCP integration (passthrough auth)
+  custom:
+    - name: "Catalyst MCP - Splunk (Passthrough Auth)"
+      apiKey: "passthrough-auth-placeholder"
+      baseURL: "http://catalyst-mcp:8443"
+      models:
+        default:
+        - "catalyst-splunk"
+        fetch: false
+      headers:
+        X-Auth-Method: "passthrough"
+        X-Forward-Credentials: "true"
+modelSpecs:
+  enforce: true
+  list:
+    - name: "cost-effective"
+      label: "Chat Model-Anthropic:haiku"
+      default: true
+      preset:
+        endpoint: "anthropic"
+        model: "claude-3-5-haiku-20241022"
+    - name: "cost-effective-sonnet"
+      label: "Chat Model-Anthropic:sonnet"
+      default: false
+      preset:
+        endpoint: "anthropic"
+        model: "claude-3-5-sonnet-20241022"
+    - name: "cost-effective-opus"
+      label: "Chat Model"
+      default: false
+      preset:
+        endpoint: "anthropic"
+        model: "claude-3-opus-20240229"
+    - name: "google-flash"
+      label: "Chat Model-Google:flash"
+      default: false
+      preset:
+        endpoint: "google"
+        model: "gemini-2.5-flash"
+    - name: "google-flash-lite"
+      label: "Chat Model-Google:flash-lite"
+      default: false
+      preset:
+        endpoint: "google"
+        model: "gemini-2.5-flash-lite"
+    - name: "google-pro"
+      label: "Chat Model-Google:pro"
+      default: false
+      preset:
+        endpoint: "google"
+        model: "gemini-2.5-pro"
+mcpServers:
+  catalyst:
+    type: streamable-http
+    url: http://catalyst-mcp:8443/mcp
+    headers:
+      X-User-ID: '{{LIBRECHAT_USER_ID}}'
+      X-User-Email: '{{LIBRECHAT_USER_EMAIL}}'
+      X-Auth-Method: 'basic'
+      X-Deployment-Type: 'shared-service-account'
+fileConfig:
+  enabled: true
+  endpoints:
+    google:
+      fileLimit: 5
+      fileSizeLimit: 10
+      totalSizeLimit: 50
+      supportedMimeTypes:
+      - image/*
+      - application/pdf
+      - text/*
+    default:
+      totalSizeLimit: 20
+  serverFileSizeLimit: 100
+  avatarSizeLimit: 2
+interface:
+  endpointsMenu: false
+  privacyPolicy:
+    externalUrl: ''
+    openNewTab: true
+  hideOpenAI: true
+  defaultEndpoint: 'google'

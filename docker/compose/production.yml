@@ -1,0 +1,83 @@
+# Production Deployment: Optimized for production use
+# Usage: docker compose -f docker/docker-compose.base.yml -f docker/compose/production.yml up
+
+version: '3.8'
+
+services:
+  catalyst-mcp:
+    # Production optimizations
+    environment:
+      - MCP_DEBUG=false
+      - SPLUNK_VERIFY_SSL=true
+    # Read-only volumes for security
+    volumes:
+      - ../knowledge-packs:/app/knowledge-packs:ro
+      - ../templates:/app/templates:ro
+    # Production resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    # More aggressive healthcheck
+    healthcheck:
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    # Production restart policy
+    restart: always
+
+  librechat:
+    # Production LibreChat settings
+    environment:
+      - ALLOW_REGISTRATION=false  # Disable registration in production
+      - NODE_ENV=production
+    # Production resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    restart: always
+    
+  mongodb:
+    # Production MongoDB with authentication
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
+    # Production resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+    restart: always
+    
+  meilisearch:
+    # Production search settings
+    environment:
+      - MEILI_ENV=production
+    # Production resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 256M
+    restart: always
+  
+  # Exclude development Splunk
+  splunk-dev:
+    profiles: ["development"]  # Only included in development

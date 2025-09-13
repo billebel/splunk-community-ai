@@ -1,46 +1,53 @@
-# Standalone MCP Server - No Web Chat Interface
-# Use this if you want to integrate the Splunk MCP server with other MCP clients
-# or use it programmatically without the LibreChat web interface
+# Splunk Community AI - MCP Server Only
+# Lightweight deployment with just the MCP server
+# Usage: docker compose -f docker-compose.mcp-only.yml up
+
 
 services:
-  splunk-mcp:
-    build: .
-    container_name: splunk-mcp-server
+  # Catalyst MCP Server - Core service only
+  catalyst-mcp:
+    build: 
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: catalyst-mcp-server
     ports:
-      - "8443:8443"  # MCP server HTTP endpoint
+      - "${MCP_PORT:-8443}:8443"
+    env_file:
+      - .env
     environment:
-      # Splunk Connection (required)
-      - SPLUNK_URL=${SPLUNK_URL:-https://your-splunk-instance:8089}
+      # MCP Server Configuration
+      - MCP_PORT=8443
+      - MCP_TRANSPORT=http
+      
+      # Splunk Connection - dynamically configured based on auth method
+      - SPLUNK_URL=${SPLUNK_URL:-https://host.docker.internal:8089}
+      - SPLUNK_AUTH_METHOD=${SPLUNK_AUTH_METHOD:-basic}
+      
+      # Basic Auth (used when SPLUNK_AUTH_METHOD=basic)
       - SPLUNK_USER=${SPLUNK_USER}
       - SPLUNK_PASSWORD=${SPLUNK_PASSWORD}
       
-      # Optional: HEC token for log ingestion
+      # Token Auth (used when SPLUNK_AUTH_METHOD=token)
+      - SPLUNK_TOKEN=${SPLUNK_TOKEN}
+      
+      # Optional: HEC Configuration for audit logging
       - SPLUNK_HEC_TOKEN=${SPLUNK_HEC_TOKEN}
-      
-      # MCP Server Configuration
-      - MCP_SERVER_HOST=0.0.0.0
-      - MCP_SERVER_PORT=8443
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      
-      # Pack Configuration
-      - PACK_NAME=splunk_enterprise
+      - SPLUNK_HEC_URL=${SPLUNK_HEC_URL}
+      - SPLUNK_HEC_INDEX=${SPLUNK_HEC_INDEX:-catalyst}
       
     volumes:
       - ./knowledge-packs:/app/knowledge-packs:ro
-      - ./logs:/app/logs
-      
+      - ./templates:/app/templates:ro
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8443/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    
-    restart: unless-stopped
-    
-    networks:
-      - mcp-network
 
+# Networks for service communication
 networks:
-  mcp-network:
-    driver: bridge
+  default:
+    name: catalyst-network
+    external: true

@@ -96,8 +96,7 @@ REM Check .env file exists
 if not exist ".env" (
     echo Creating .env from .env.example...
     copy ".env.example" ".env" >nul
-    echo Please edit .env file with your Splunk credentials.
-    pause
+    call :configure_splunk_auth
 )
 echo Starting MCP server...
 docker-compose -f docker-compose.mcp-only.yml up -d
@@ -167,6 +166,162 @@ if "%choice%"=="1" (
 ) else if "%choice%"=="3" (
     echo   scripts\stop-dev.bat
 )
+goto :end
+
+:configure_splunk_auth
+echo.
+echo ====================================================
+echo   Splunk Authentication Configuration
+echo ====================================================
+echo.
+echo Choose your Splunk authentication method:
+echo.
+echo [1] Basic Authentication (Username/Password)
+echo     - Traditional shared service account
+echo     - Good for: Development, testing, simple deployments
+echo.
+echo [2] Token Authentication (Recommended)
+echo     - Splunk authentication token
+echo     - More secure, easier to rotate
+echo     - Good for: Production, secure deployments
+echo.
+echo [3] Passthrough Authentication (Enterprise)
+echo     - Each user uses their own credentials
+echo     - No shared service account needed
+echo     - Good for: Multi-user environments, enterprise SSO
+echo.
+
+:auth_choice_loop
+set /p auth_choice="Enter your choice [1-3]: "
+
+if "%auth_choice%"=="1" (
+    call :configure_basic_auth
+    goto :auth_done
+) else if "%auth_choice%"=="2" (
+    call :configure_token_auth
+    goto :auth_done
+) else if "%auth_choice%"=="3" (
+    call :configure_passthrough_auth
+    goto :auth_done
+) else (
+    echo Invalid choice. Please enter 1, 2, or 3.
+    goto :auth_choice_loop
+)
+
+:configure_basic_auth
+echo.
+echo Configuring Basic Authentication...
+echo.
+
+REM Add/update auth method in .env
+findstr /c:"SPLUNK_AUTH_METHOD=" .env >nul
+if errorlevel 1 (
+    echo SPLUNK_AUTH_METHOD=basic >> .env
+) else (
+    powershell -Command "(Get-Content .env) -replace '^SPLUNK_AUTH_METHOD=.*', 'SPLUNK_AUTH_METHOD=basic' | Set-Content .env"
+)
+
+REM Prompt for credentials
+set /p splunk_user="Enter Splunk username: "
+set /p splunk_password="Enter Splunk password: "
+
+REM Update .env file
+findstr /c:"SPLUNK_USER=" .env >nul
+if errorlevel 1 (
+    echo SPLUNK_USER=%splunk_user% >> .env
+) else (
+    powershell -Command "(Get-Content .env) -replace '^SPLUNK_USER=.*', 'SPLUNK_USER=%splunk_user%' | Set-Content .env"
+)
+
+findstr /c:"SPLUNK_PASSWORD=" .env >nul
+if errorlevel 1 (
+    echo SPLUNK_PASSWORD=%splunk_password% >> .env
+) else (
+    powershell -Command "(Get-Content .env) -replace '^SPLUNK_PASSWORD=.*', 'SPLUNK_PASSWORD=%splunk_password%' | Set-Content .env"
+)
+
+echo ✓ Basic authentication configured
+
+REM Copy appropriate pack template
+copy "templates\pack\pack.template.basic.yaml" "knowledge-packs\splunk_enterprise\pack.yaml" >nul
+echo ✓ Pack configuration updated for basic auth
+
+REM Copy appropriate LibreChat template
+copy "templates\librechat\librechat.template.basic.yaml" "librechat.yaml" >nul
+echo ✓ LibreChat configuration updated for basic auth
+goto :eof
+
+:configure_token_auth
+echo.
+echo Configuring Token Authentication...
+echo.
+
+REM Add/update auth method in .env
+findstr /c:"SPLUNK_AUTH_METHOD=" .env >nul
+if errorlevel 1 (
+    echo SPLUNK_AUTH_METHOD=token >> .env
+) else (
+    powershell -Command "(Get-Content .env) -replace '^SPLUNK_AUTH_METHOD=.*', 'SPLUNK_AUTH_METHOD=token' | Set-Content .env"
+)
+
+echo To create a Splunk token:
+echo 1. Splunk Web: Settings ^> Tokens ^> New Token
+echo 2. REST API: curl -k -u user:pass "https://splunk:8089/services/authorization/tokens" -d name=catalyst-token
+echo.
+
+set /p splunk_token="Enter Splunk authentication token: "
+
+REM Update .env file
+findstr /c:"SPLUNK_TOKEN=" .env >nul
+if errorlevel 1 (
+    echo SPLUNK_TOKEN=%splunk_token% >> .env
+) else (
+    powershell -Command "(Get-Content .env) -replace '^SPLUNK_TOKEN=.*', 'SPLUNK_TOKEN=%splunk_token%' | Set-Content .env"
+)
+
+echo ✓ Token authentication configured
+
+REM Copy appropriate pack template
+copy "templates\pack\pack.template.token.yaml" "knowledge-packs\splunk_enterprise\pack.yaml" >nul
+echo ✓ Pack configuration updated for token auth
+
+REM Copy appropriate LibreChat template
+copy "templates\librechat\librechat.template.token.yaml" "librechat.yaml" >nul
+echo ✓ LibreChat configuration updated for token auth
+goto :eof
+
+:configure_passthrough_auth
+echo.
+echo Configuring Passthrough Authentication...
+echo.
+
+REM Add/update auth method in .env
+findstr /c:"SPLUNK_AUTH_METHOD=" .env >nul
+if errorlevel 1 (
+    echo SPLUNK_AUTH_METHOD=passthrough >> .env
+) else (
+    powershell -Command "(Get-Content .env) -replace '^SPLUNK_AUTH_METHOD=.*', 'SPLUNK_AUTH_METHOD=passthrough' | Set-Content .env"
+)
+
+echo ✓ Passthrough authentication configured
+
+REM Copy appropriate pack template
+copy "templates\pack\pack.template.passthrough.yaml" "knowledge-packs\splunk_enterprise\pack.yaml" >nul
+echo ✓ Pack configuration updated for passthrough auth
+
+REM Copy appropriate LibreChat template
+copy "templates\librechat\librechat.template.passthrough.yaml" "librechat.yaml" >nul
+echo ✓ LibreChat configuration updated for passthrough auth
+echo.
+echo Note: Passthrough auth requires MCP client to provide user credentials.
+echo This is ideal for multi-user environments where each user has their own Splunk account.
+echo No additional environment variables needed.
+goto :eof
+
+:auth_done
+goto :eof
+
+:end
 echo.
 echo For help: Check README.md or visit our documentation
 echo.

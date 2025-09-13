@@ -1,0 +1,20 @@
+# Full Stack Deployment: MCP Server + LibreChat Web Interface
+# Usage: docker compose -f docker/docker-compose.base.yml -f docker/compose/full-stack.yml up
+
+version: '3.8'
+
+services:
+  catalyst-mcp:
+    # Use all base configuration
+    
+  librechat:
+    # Enable LibreChat web interface
+    profiles: [""]  # Always included in this deployment
+    
+  mongodb:
+    # Required for LibreChat
+    profiles: [""]  # Always included
+    
+  meilisearch:
+    # Required for LibreChat search
+    profiles: [""]  # Always included

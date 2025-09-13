@@ -252,6 +252,95 @@ class TestDockerComposeEnvironmentIntegration:
             assert "services" in config, f"{compose_file} should have services section"
 
 
+class TestAuthenticationConfiguration:
+    """Test authentication method configuration and templates"""
+    
+    @pytest.fixture
+    def project_root(self):
+        return Path(__file__).parent.parent.parent
+    
+    def test_auth_method_templates_exist(self, project_root):
+        """Test that all authentication method templates exist"""
+        auth_methods = ['basic', 'token', 'passthrough']
+        
+        for auth_method in auth_methods:
+            # Check pack templates in templates/pack directory
+            pack_template = project_root / "templates" / "pack" / f"pack.template.{auth_method}.yaml"
+            assert pack_template.exists(), f"Missing pack template: {pack_template}"
+            
+            # Check LibreChat templates in templates/librechat directory  
+            librechat_template = project_root / "templates" / "librechat" / f"librechat.template.{auth_method}.yaml"
+            assert librechat_template.exists(), f"Missing LibreChat template: {librechat_template}"
+    
+    def test_auth_examples_file_completeness(self, project_root):
+        """Test .env.auth-examples contains all three auth methods"""
+        auth_examples = project_root / ".env.auth-examples"
+        assert auth_examples.exists(), ".env.auth-examples file missing"
+        
+        content = auth_examples.read_text()
+        
+        # Should document all three methods
+        assert "SPLUNK_AUTH_METHOD=basic" in content
+        assert "SPLUNK_AUTH_METHOD=token" in content  
+        assert "SPLUNK_AUTH_METHOD=passthrough" in content
+        
+        # Should have examples for each method
+        assert "SPLUNK_USER=" in content
+        assert "SPLUNK_TOKEN=" in content
+        assert "passthrough" in content.lower()
+        
+        # Should have explanatory comments
+        assert "Username/password" in content
+        assert "authentication token" in content
+        assert "credentials forwarded" in content
+    
+    def test_deployment_script_auth_functions(self, project_root):
+        """Test that deployment scripts contain authentication functions"""
+        deploy_sh = project_root / "scripts" / "deploy.sh"
+        deploy_bat = project_root / "scripts" / "deploy.bat"
+        
+        for script in [deploy_sh, deploy_bat]:
+            assert script.exists(), f"Deployment script missing: {script}"
+            content = script.read_text()
+            
+            # Should contain authentication selection functions
+            assert "configure_splunk_auth" in content, f"Missing configure_splunk_auth in {script}"
+            assert "configure_basic_auth" in content, f"Missing configure_basic_auth in {script}"
+            assert "configure_token_auth" in content, f"Missing configure_token_auth in {script}"
+            assert "configure_passthrough_auth" in content, f"Missing configure_passthrough_auth in {script}"
+    
+    def test_env_example_auth_method_variable(self, project_root):
+        """Test .env.example includes SPLUNK_AUTH_METHOD configuration"""
+        env_example = project_root / ".env.example"
+        content = env_example.read_text()
+        
+        # Should reference authentication method selection
+        auth_method_mentioned = any(phrase in content for phrase in [
+            "AUTH_METHOD", "authentication", "auth method", "basic", "token"
+        ])
+        assert auth_method_mentioned, ".env.example should mention authentication method selection"
+    
+    def test_template_file_syntax_validity(self, project_root):
+        """Test that all template files are valid YAML"""
+        auth_methods = ['basic', 'token', 'passthrough']
+        
+        for auth_method in auth_methods:
+            # Test pack templates
+            pack_template = project_root / "templates" / "pack" / f"pack.template.{auth_method}.yaml"
+            if pack_template.exists():
+                with open(pack_template, 'r', encoding='utf-8') as f:
+                    config = yaml.safe_load(f)  # Should not raise exception
+                    assert isinstance(config, dict), f"Invalid pack template: {pack_template}"
+                    assert 'connection' in config, f"Pack template missing connection: {pack_template}"
+            
+            # Test LibreChat templates  
+            librechat_template = project_root / "templates" / "librechat" / f"librechat.template.{auth_method}.yaml"
+            if librechat_template.exists():
+                with open(librechat_template, 'r', encoding='utf-8') as f:
+                    config = yaml.safe_load(f)  # Should not raise exception
+                    assert isinstance(config, dict), f"Invalid LibreChat template: {librechat_template}"
+
+
 class TestConfigurationErrorHandling:
     """Test configuration error handling and user feedback"""
     

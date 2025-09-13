@@ -89,7 +89,7 @@ function deploy_full() {
     fi
     
     echo "Starting full web experience..."
-    docker-compose up -d
+    docker compose up -d
     
     echo
     echo "===================================================="
@@ -104,7 +104,8 @@ function deploy_full() {
     echo "2. Visit http://localhost:3080 to access the chat interface"
     echo "3. Test MCP server: scripts/test-mcp.sh"
     echo
-    echo "To stop: docker-compose down"
+    echo "Helper script: docker compose up -d"
+    echo "To stop: docker compose down"
 }
 
 function deploy_mcp_only() {
@@ -119,8 +120,7 @@ function deploy_mcp_only() {
         echo "Creating .env from .env.example..."
         if [ -f ".env.example" ]; then
             cp .env.example .env
-            echo "Please edit .env file with your Splunk credentials."
-            read -p "Press Enter after editing .env, or Ctrl+C to exit..."
+            configure_splunk_auth
         else
             echo "ERROR: .env.example not found"
             exit 1
@@ -128,7 +128,7 @@ function deploy_mcp_only() {
     fi
     
     echo "Starting MCP server..."
-    docker-compose -f docker-compose.mcp-only.yml up -d
+    docker compose -f docker-compose.mcp-only.yml up -d
     
     echo
     echo "===================================================="
@@ -142,7 +142,8 @@ function deploy_mcp_only() {
     echo "2. Use MCP endpoint: http://localhost:8443/mcp"
     echo "3. Test server: scripts/test-mcp.sh"
     echo
-    echo "To stop: docker-compose -f docker-compose.mcp-only.yml down"
+    echo "Helper script: docker compose -f docker-compose.mcp-only.yml up -d"
+    echo "To stop: docker compose -f docker-compose.mcp-only.yml down"
 }
 
 function deploy_dev() {
@@ -165,7 +166,7 @@ function deploy_dev() {
     fi
     
     echo "Starting development environment..."
-    docker-compose -f docker-compose.splunk.yml up -d
+    docker compose -f docker-compose.dev.yml up -d
     
     echo
     echo "Waiting for services to start..."
@@ -184,9 +185,159 @@ function deploy_dev() {
     echo "1. Wait 2-3 minutes for Splunk to fully start"
     echo "2. Login to Splunk: http://localhost:8000 (admin/changeme)"
     echo "3. Test MCP server: scripts/test-mcp.sh"
-    echo "4. Stop when done: scripts/stop-dev.sh"
     echo
-    echo "To stop: docker-compose -f docker-compose.splunk.yml down"
+    echo "Helper script: docker compose -f docker-compose.dev.yml up -d"
+    echo "To stop: docker compose -f docker-compose.dev.yml down"
+}
+
+function configure_splunk_auth() {
+    echo
+    echo "===================================================="
+    echo "   Splunk Authentication Configuration"
+    echo "===================================================="
+    echo
+    echo "Choose your Splunk authentication method:"
+    echo
+    echo "[1] Basic Authentication (Username/Password)"
+    echo "    - Traditional shared service account"
+    echo "    - Good for: Development, testing, simple deployments"
+    echo
+    echo "[2] Token Authentication (Recommended)"  
+    echo "    - Splunk authentication token"
+    echo "    - More secure, easier to rotate"
+    echo "    - Good for: Production, secure deployments"
+    echo
+    echo "[3] Passthrough Authentication (Enterprise)"
+    echo "    - Each user uses their own credentials"
+    echo "    - No shared service account needed"
+    echo "    - Good for: Multi-user environments, enterprise SSO"
+    echo
+    
+    while true; do
+        read -p "Enter your choice [1-3]: " auth_choice
+        case $auth_choice in
+            1)
+                configure_basic_auth
+                break
+                ;;
+            2)
+                configure_token_auth
+                break
+                ;;
+            3)
+                configure_passthrough_auth
+                break
+                ;;
+            *)
+                echo "Invalid choice. Please enter 1, 2, or 3."
+                ;;
+        esac
+    done
+}
+
+function configure_basic_auth() {
+    echo
+    echo "Configuring Basic Authentication..."
+    echo
+    
+    # Add/update auth method in .env
+    if grep -q "SPLUNK_AUTH_METHOD=" .env; then
+        sed -i 's/SPLUNK_AUTH_METHOD=.*/SPLUNK_AUTH_METHOD=basic/' .env
+    else
+        echo "SPLUNK_AUTH_METHOD=basic" >> .env
+    fi
+    
+    # Prompt for credentials
+    read -p "Enter Splunk username: " splunk_user
+    read -s -p "Enter Splunk password: " splunk_password
+    echo
+    
+    # Update .env file
+    if grep -q "SPLUNK_USER=" .env; then
+        sed -i "s/SPLUNK_USER=.*/SPLUNK_USER=$splunk_user/" .env
+    else
+        echo "SPLUNK_USER=$splunk_user" >> .env
+    fi
+    
+    if grep -q "SPLUNK_PASSWORD=" .env; then
+        sed -i "s/SPLUNK_PASSWORD=.*/SPLUNK_PASSWORD=$splunk_password/" .env
+    else
+        echo "SPLUNK_PASSWORD=$splunk_password" >> .env
+    fi
+    
+    echo "✓ Basic authentication configured"
+    
+    # Copy appropriate pack template
+    cp "templates/pack/pack.template.basic.yaml" "knowledge-packs/splunk_enterprise/pack.yaml"
+    echo "✓ Pack configuration updated for basic auth"
+    
+    # Copy appropriate LibreChat template
+    cp "templates/librechat/librechat.template.basic.yaml" "librechat.yaml"
+    echo "✓ LibreChat configuration updated for basic auth"
+}
+
+function configure_token_auth() {
+    echo
+    echo "Configuring Token Authentication..."
+    echo
+    
+    # Add/update auth method in .env
+    if grep -q "SPLUNK_AUTH_METHOD=" .env; then
+        sed -i 's/SPLUNK_AUTH_METHOD=.*/SPLUNK_AUTH_METHOD=token/' .env
+    else
+        echo "SPLUNK_AUTH_METHOD=token" >> .env
+    fi
+    
+    echo "To create a Splunk token:"
+    echo "1. Splunk Web: Settings > Tokens > New Token"
+    echo "2. REST API: curl -k -u user:pass 'https://splunk:8089/services/authorization/tokens' -d name=catalyst-token"
+    echo
+    
+    read -p "Enter Splunk authentication token: " splunk_token
+    
+    # Update .env file
+    if grep -q "SPLUNK_TOKEN=" .env; then
+        sed -i "s/SPLUNK_TOKEN=.*/SPLUNK_TOKEN=$splunk_token/" .env
+    else
+        echo "SPLUNK_TOKEN=$splunk_token" >> .env
+    fi
+    
+    echo "✓ Token authentication configured"
+    
+    # Copy appropriate pack template
+    cp "templates/pack/pack.template.token.yaml" "knowledge-packs/splunk_enterprise/pack.yaml"
+    echo "✓ Pack configuration updated for token auth"
+    
+    # Copy appropriate LibreChat template
+    cp "templates/librechat/librechat.template.token.yaml" "librechat.yaml"
+    echo "✓ LibreChat configuration updated for token auth"
+}
+
+function configure_passthrough_auth() {
+    echo
+    echo "Configuring Passthrough Authentication..."
+    echo
+    
+    # Add/update auth method in .env
+    if grep -q "SPLUNK_AUTH_METHOD=" .env; then
+        sed -i 's/SPLUNK_AUTH_METHOD=.*/SPLUNK_AUTH_METHOD=passthrough/' .env
+    else
+        echo "SPLUNK_AUTH_METHOD=passthrough" >> .env
+    fi
+    
+    echo "✓ Passthrough authentication configured"
+    
+    # Copy appropriate pack template
+    cp "templates/pack/pack.template.passthrough.yaml" "knowledge-packs/splunk_enterprise/pack.yaml"
+    echo "✓ Pack configuration updated for passthrough auth"
+    
+    # Copy appropriate LibreChat template  
+    cp "templates/librechat/librechat.template.passthrough.yaml" "librechat.yaml"
+    echo "✓ LibreChat configuration updated for passthrough auth"
+    echo
+    echo "Note: Passthrough auth requires MCP client to provide user credentials."
+    echo "This is ideal for multi-user environments where each user has their own Splunk account."
+    echo "No additional environment variables needed."
 }
 
 echo

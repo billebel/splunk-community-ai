@@ -1,0 +1,104 @@
+# Splunk Community Pack - Passthrough Authentication Template
+# Open source architecture with logical tool groupings
+
+metadata:
+  name: "splunk_community"
+  version: "1.0.0"
+  description: "Open source Splunk integration optimized for modern LLM tool calling patterns"
+  vendor: "Community"
+  license: "MIT"
+  compatibility: "^2.0.0"
+  domain: "security_analytics"
+  category: "SIEM"
+  keywords: ["splunk", "security", "logs", "siem", "search"]
+  
+  # LLM optimization flags
+  tool_calling_optimized: true
+  modular_tools: true
+  discovery_focused: true
+
+connection:
+  type: "rest"
+  base_url: "{SPLUNK_URL}"
+  auth:
+    method: "passthrough"
+    config:
+      # Passthrough authentication forwards user credentials from MCP client
+      # No stored credentials required - each user authenticates individually
+      forward_headers: true
+  timeout: 30
+  verify_ssl: false
+
+# Core flexible search tool - LLM constructs all searches
+tools:
+  execute_splunk_search:
+    type: "search"  
+    display_name: "🔍 Execute Splunk Search Query"
+    description: "⚠️ USE AFTER GUIDED SEARCH: Run SPL queries against Splunk and return real data results. Always use '🎯 START HERE' tool first for strategy."
+    business_purpose: "Execute validated search queries after following security guidelines from guided search tool"
+    key_capabilities:
+      - "Execute any valid SPL search query"
+      - "Return structured JSON results for LLM analysis"
+      - "Support time range and result limiting"
+    best_used_for:
+      - "Custom searches constructed by LLM based on user intent"
+      - "Targeted searches using discovered indexes, sourcetypes, and knowledge objects"
+      - "Adaptive queries that leverage existing data models and event types"
+    endpoint: "/services/search/jobs/oneshot"
+    method: "POST"
+    
+    parameters:
+      - name: "search_query"
+        type: "string"
+        description: "The SPL search query to execute (without 'search' prefix - will be added automatically)"
+        required: true
+        examples:
+          - "index=security EventCode=4625"
+          - "index=web status>=400 | stats count by status"
+          - "index=* error | head 10"
+      
+      - name: "earliest_time"
+        type: "string"
+        description: "Start time for search (Splunk time format)"
+        required: false
+        default: "-1h"
+        examples:
+          - "-1h" 
+          - "-24h@h"
+          - "2024-01-01T00:00:00"
+      
+      - name: "latest_time" 
+        type: "string"
+        description: "End time for search (Splunk time format)"
+        required: false
+        default: "now"
+        examples:
+          - "now"
+          - "@h" 
+          - "2024-01-01T23:59:59"
+      
+      - name: "max_results"
+        type: "integer"
+        description: "Maximum number of results to return"
+        required: false
+        default: 100
+        min_value: 1
+        max_value: 1000
+
+    # Form data for Splunk oneshot API - includes field filtering for performance
+    form_data:
+      search: "search {search_query} | table _time, _raw, index, sourcetype, source, host"
+      earliest_time: "{earliest_time}"
+      latest_time: "{latest_time}"
+      count: "{max_results}"
+      output_mode: "json"
+      exec_mode: "oneshot"
+    
+    # HTTP headers required by Splunk API
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+    
+    # Transform raw Splunk response for LLM consumption
+    transforms:
+      - engine: "python" 
+        function: "search.process_search_results"

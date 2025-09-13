@@ -1,0 +1,42 @@
+# Development Environment: Full Stack + Development Splunk Instance
+# Usage: docker compose -f docker/docker-compose.base.yml -f docker/compose/development.yml up
+
+version: '3.8'
+
+services:
+  catalyst-mcp:
+    # Development optimizations
+    environment:
+      - MCP_DEBUG=true
+      - SPLUNK_URL=http://splunk-dev:8089  # Use development Splunk
+    # Enable code reload for development
+    volumes:
+      - ../knowledge-packs:/app/knowledge-packs:rw  # Read-write for development
+      - ../templates:/app/templates:rw
+    # Extend healthcheck timing for development
+    healthcheck:
+      start_period: 60s
+      interval: 15s
+
+  librechat:
+    # Development LibreChat settings
+    environment:
+      - ALLOW_REGISTRATION=true
+      - NODE_ENV=development
+    # Enable development features
+    
+  mongodb:
+    # Development MongoDB - no auth required
+    
+  meilisearch:
+    # Development search settings
+    environment:
+      - MEILI_ENV=development
+    
+  splunk-dev:
+    # Include development Splunk instance
+    profiles: [""]  # Always included in development
+    # Additional development settings
+    environment:
+      - DEBUG=true
+      - SPLUNK_ENABLE_DFS=false  # Disable DFS for single instance

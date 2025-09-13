@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "splunk-community-ai": {
+      "transport": {
+        "type": "sse",
+        "url": "http://localhost:8443/mcp"
+      }
+    }
+  }
+}

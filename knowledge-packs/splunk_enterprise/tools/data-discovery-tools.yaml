@@ -153,6 +153,8 @@ tools:
     display_name: "🎯 Get Ready-to-Use Search Patterns"
     description: "⚠️ USE AFTER GUIDED SEARCH: Quick patterns recommended by strategy planner. Get pre-built search examples for common requests."
     business_purpose: "Translate user requests into specific Splunk search components with examples"
+    endpoint: "/services/data/indexes"
+    method: "GET"
     key_capabilities:
       - "Convert 'show me login failures' → 'index=security EventCode=4625'"
       - "Get example searches for common use cases"

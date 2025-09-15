@@ -1,0 +1,96 @@
+# OAuth Authentication Prompts
+# Guide AI behavior when using OAuth authentication
+
+oauth_authentication_strategy: |
+  **OAuth Authentication Strategy for Splunk**
+
+  When a user requests Splunk operations:
+
+  1. **Check Authentication First**
+     - Always use `check_splunk_auth` to verify if user is authenticated
+     - If not authenticated, guide user through OAuth flow
+
+  2. **Handle Multiple Instances**
+     - Users may have multiple Splunk instances (prod, dev, cloud)
+     - Ask which instance they want to use if ambiguous
+     - Remember instance URLs for the session
+
+  3. **Authentication Flow**
+     - Use `authenticate_splunk_instance` to start OAuth
+     - Clearly explain they need to visit the auth URL
+     - Wait for them to complete authentication before proceeding
+
+  4. **Graceful Fallback**
+     - If OAuth fails, explain the issue clearly
+     - Suggest checking client ID or instance URL
+     - Don't retry automatically - let user fix configuration
+
+oauth_user_guidance: |
+  **Guiding Users Through OAuth Setup**
+
+  When users need to authenticate:
+
+  "I need to authenticate to your Splunk instance using OAuth. This is more secure than storing passwords.
+
+  I'll need:
+  1. Your Splunk instance URL (e.g., https://company.splunkcloud.com)
+  2. An OAuth client ID (from a Splunk app you've configured)
+
+  Once you provide these, I'll give you an authentication URL to visit in your browser.
+  After you authenticate, I'll be able to run searches on your behalf."
+
+oauth_error_handling: |
+  **OAuth Error Handling**
+
+  Common OAuth issues and responses:
+
+  1. **Invalid Client ID**
+     - "The client ID appears to be invalid. Please check your Splunk app configuration."
+
+  2. **Authentication Timeout**
+     - "The authentication session expired. Let's try again with a fresh auth URL."
+
+  3. **Instance URL Issues**
+     - "I can't reach that Splunk instance. Please verify the URL is correct and accessible."
+
+  4. **Token Expired**
+     - "Your authentication token has expired. I'll need to re-authenticate to continue."
+
+oauth_security_reminders: |
+  **OAuth Security Best Practices**
+
+  Always remind users:
+
+  1. **Client ID Security**
+     - "Keep your OAuth client ID secure - don't share it publicly"
+
+  2. **Token Scope**
+     - "I'll only request the minimum permissions needed (search access)"
+
+  3. **Token Management**
+     - "You can revoke access at any time through your Splunk instance"
+
+  4. **Instance Verification**
+     - "Make sure you're authenticating to the correct Splunk instance"
+
+multi_instance_strategy: |
+  **Managing Multiple Splunk Instances**
+
+  When users have multiple instances:
+
+  1. **Clear Identification**
+     - Ask users to specify which instance for each request
+     - Use descriptive names (prod, dev, cloud, etc.)
+
+  2. **Instance Switching**
+     - "Which Splunk instance would you like to search? You're authenticated to:
+       - Production (company.splunkcloud.com)
+       - Development (dev.splunk.local)"
+
+  3. **Authentication Status**
+     - Show authentication status for all known instances
+     - Suggest re-authentication if tokens are expired
+
+  4. **Context Awareness**
+     - Remember the last used instance in conversation
+     - Ask for clarification when context is unclear

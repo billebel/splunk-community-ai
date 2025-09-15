@@ -35,6 +35,9 @@ Built-in **query efficiency controls** and **resource management** prevent AI fr
 ### 🎯 Multi-LLM Support
 Works with **OpenAI, Anthropic Claude, Google Gemini** - choose the right model for your security requirements and budget.
 
+### 🔐 OAuth Authentication Support
+Secure authentication to any Splunk instance without storing passwords. Support for **multi-instance authentication** and **dynamic OAuth flows** that work with Splunk Cloud, Enterprise, and custom deployments.
+
 Show your auditors exactly how AI is controlled with simple, readable configuration:
 
 ```yaml

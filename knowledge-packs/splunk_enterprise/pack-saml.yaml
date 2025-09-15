@@ -1,0 +1,183 @@
+# Splunk Community Pack - SAML/SSO Version
+# Supports SAML authentication for enterprise Splunk instances
+
+metadata:
+  name: "splunk_community_saml"
+  version: "1.0.0"
+  description: "Splunk integration with SAML/SSO authentication support"
+  vendor: "Community"
+  license: "MIT"
+  compatibility: "^2.0.0"
+  domain: "security_analytics"
+  category: "SIEM"
+  keywords: ["splunk", "security", "saml", "sso", "siem"]
+
+  # SAML optimization flags
+  saml_enabled: true
+  auto_detect_auth: true
+  multi_instance: true
+
+connection:
+  type: "rest"
+  base_url: "{SPLUNK_URL}"
+  auth:
+    method: "saml"
+    config:
+      # SAML will be handled dynamically per instance
+      auto_detect: true
+      token_name: "mcp-saml-token"
+      token_duration: "30d"
+      header: "Authorization"
+      format: "Splunk {token}"
+  timeout: 30
+  verify_ssl: false
+
+# SAML authentication tools
+tools:
+  authenticate_splunk_saml:
+    type: "execute"
+    display_name: "🔐 Authenticate via SAML/SSO"
+    description: "Start SAML authentication flow for a Splunk instance"
+    business_purpose: "Enable secure access to Splunk using enterprise SSO"
+    endpoint: "/trigger_saml_authentication"
+    method: "MCP_TOOL"  # This calls the MCP tool directly
+
+    parameters:
+      - name: "instance_url"
+        type: "string"
+        required: true
+        description: "Splunk instance URL (e.g., https://company.splunkcloud.com)"
+
+  check_saml_auth:
+    type: "search"
+    display_name: "🔍 Check SAML Authentication Status"
+    description: "Check if authenticated to a Splunk instance via SAML"
+    endpoint: "/check_saml_status"
+    method: "MCP_TOOL"
+
+    parameters:
+      - name: "instance_url"
+        type: "string"
+        required: true
+        description: "Splunk instance URL to check"
+
+  detect_auth_method:
+    type: "search"
+    display_name: "🔍 Detect Authentication Method"
+    description: "Auto-detect whether Splunk instance uses SAML or basic auth"
+    endpoint: "/detect_splunk_auth_method"
+    method: "MCP_TOOL"
+
+    parameters:
+      - name: "instance_url"
+        type: "string"
+        required: true
+        description: "Splunk instance URL to analyze"
+
+  list_authenticated_instances:
+    type: "search"
+    display_name: "📋 List Authenticated Instances"
+    description: "Show all Splunk instances with active authentication"
+    endpoint: "/list_authenticated_instances"
+    method: "MCP_TOOL"
+
+  # Standard search tool (will use SAML token automatically)
+  execute_splunk_search:
+    type: "search"
+    display_name: "🔍 Execute Splunk Search"
+    description: "Run SPL queries with SAML authentication"
+    business_purpose: "Execute searches on SAML-authenticated Splunk instances"
+    endpoint: "/services/search/jobs/oneshot"
+    method: "POST"
+
+    parameters:
+      - name: "search_query"
+        type: "string"
+        required: true
+        description: "SPL search query"
+
+      - name: "earliest_time"
+        type: "string"
+        required: false
+        default: "-1h"
+
+      - name: "latest_time"
+        type: "string"
+        required: false
+        default: "now"
+
+      - name: "max_results"
+        type: "integer"
+        required: false
+        default: 100
+
+    form_data:
+      search: "search {search_query}"
+      earliest_time: "{earliest_time}"
+      latest_time: "{latest_time}"
+      count: "{max_results}"
+      output_mode: "json"
+      exec_mode: "oneshot"
+
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+
+    transform:
+      type: "jq"
+      expression: ".results"
+
+# Include existing modular tools (discovery, guardrails, etc.)
+structure:
+  tools:
+    - "tools/data-discovery-tools.yaml"
+    - "tools/guardrails-tools.yaml"
+    - "tools/knowledge-objects-tools.yaml"
+    - "tools/system-info-tools.yaml"
+  prompts:
+    - "prompts/search-prompts.yaml"
+    - "prompts/dashboard-prompts.yaml"
+    - "prompts/scheduled-search-prompts.yaml"
+    - "prompts/knowledge-objects-prompts.yaml"
+    - "prompts/system-diagnostics-prompts.yaml"
+    - "prompts/saml-prompts.yaml"
+
+settings:
+  retry:
+    max_retries: 3
+    backoff: exponential
+    backoff_factor: 2
+  rate_limit:
+    requests_per_minute: 60
+  cache:
+    enabled: false
+
+examples:
+  - name: Detect Authentication Method
+    tool: detect_auth_method
+    parameters:
+      instance_url: "https://company.splunkcloud.com"
+    description: Check if instance uses SAML or basic authentication
+
+  - name: Authenticate via SAML
+    tool: authenticate_splunk_saml
+    parameters:
+      instance_url: "https://company.splunkcloud.com"
+    description: Start SAML authentication flow for enterprise SSO
+
+  - name: Check Authentication Status
+    tool: check_saml_auth
+    parameters:
+      instance_url: "https://company.splunkcloud.com"
+    description: Verify SAML authentication status
+
+  - name: Basic Security Search
+    tool: execute_splunk_search
+    parameters:
+      search_query: "search index=security EventCode=4625 | stats count by src_ip | head 10"
+      earliest_time: "-1h"
+      latest_time: "now"
+    description: Search for failed login attempts using SAML authentication
+
+  - name: Multi-Instance Authentication
+    tool: list_authenticated_instances
+    description: View all authenticated Splunk instances

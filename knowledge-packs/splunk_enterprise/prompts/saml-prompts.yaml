@@ -1,0 +1,172 @@
+# SAML Authentication Prompts
+# Guide AI behavior when using SAML/SSO authentication
+
+saml_authentication_strategy: |
+  **SAML/SSO Authentication Strategy for Splunk**
+
+  When a user requests Splunk operations:
+
+  1. **Auto-Detect Authentication Method First**
+     - Always use `detect_auth_method` to determine if instance uses SAML
+     - This prevents unnecessary authentication attempts on basic auth instances
+
+  2. **Handle SAML Authentication Flow**
+     - Use `authenticate_splunk_saml` to start SSO flow
+     - Clearly explain they'll be redirected to their company's SSO login
+     - Wait for them to complete authentication before proceeding
+
+  3. **Check Authentication Status**
+     - Use `check_saml_auth` to verify authentication before executing searches
+     - If not authenticated, guide user through SAML flow
+
+  4. **Multi-Instance Support**
+     - Users may have multiple Splunk instances (prod, dev, cloud)
+     - Use `list_authenticated_instances` to show current authentications
+     - Ask which instance they want to use if multiple are available
+
+saml_user_guidance: |
+  **Guiding Users Through SAML/SSO Authentication**
+
+  When users need to authenticate via SAML:
+
+  "I'll authenticate you to your Splunk instance using your organization's Single Sign-On (SSO).
+
+  **What will happen:**
+  1. I'll detect if your Splunk instance uses SSO
+  2. If it does, I'll provide a secure authentication link
+  3. You'll be redirected to your company's login page (e.g., Okta, Azure AD, etc.)
+  4. After logging in, you'll be redirected back and authenticated
+
+  **What you need:**
+  - Your Splunk instance URL (e.g., https://company.splunkcloud.com)
+  - Access to your company's SSO system
+
+  This is more secure than passwords - no credentials are stored!"
+
+saml_authentication_flow: |
+  **Step-by-Step SAML Authentication Process**
+
+  1. **Detection Phase**
+     - "Let me check what type of authentication your Splunk instance uses..."
+     - Use detect_auth_method tool
+     - Inform user of detected method
+
+  2. **SAML Flow Initiation**
+     - "Your instance uses SAML/SSO. I'll start the authentication process."
+     - Use authenticate_splunk_saml tool
+     - Provide clear instructions about the auth URL
+
+  3. **User Authentication**
+     - "Please click the authentication link to log in via your company's SSO"
+     - "After logging in, you'll be automatically redirected back"
+     - "The process should complete in a few seconds"
+
+  4. **Verification**
+     - "Authentication successful! I can now access your Splunk instance."
+     - Use check_saml_auth to confirm authentication
+     - Proceed with user's original request
+
+saml_error_handling: |
+  **SAML Authentication Error Handling**
+
+  Common SAML issues and responses:
+
+  1. **Instance Not SAML-Enabled**
+     - "This Splunk instance doesn't appear to use SAML/SSO authentication."
+     - "It likely uses basic authentication (username/password)."
+     - "Please provide your Splunk credentials or check if this is the correct instance URL."
+
+  2. **Authentication Timeout**
+     - "The SAML authentication session expired."
+     - "This usually happens if you don't complete the login within 15 minutes."
+     - "Let's try again with a fresh authentication link."
+
+  3. **SSO Login Issues**
+     - "There was an issue with your SSO login."
+     - "Please check that you have access to this Splunk instance through your organization's SSO."
+     - "If you continue having issues, contact your IT administrator."
+
+  4. **Token Creation Failed**
+     - "I was unable to create an authentication token after your SSO login."
+     - "This might be due to permissions or Splunk configuration."
+     - "Please ensure you have the necessary permissions to create tokens in Splunk."
+
+  5. **Instance URL Issues**
+     - "I can't reach that Splunk instance URL."
+     - "Please verify the URL is correct and accessible from your network."
+     - "Common formats: https://company.splunkcloud.com or https://splunk.company.com:8089"
+
+saml_security_benefits: |
+  **SAML Security Advantages**
+
+  Always highlight security benefits to users:
+
+  1. **No Password Storage**
+     - "Your passwords are never stored or handled by this system"
+     - "Authentication goes directly through your company's secure SSO system"
+
+  2. **Enterprise Security Compliance**
+     - "Uses your organization's existing security policies"
+     - "Supports multi-factor authentication if configured by your IT team"
+
+  3. **Token-Based Access**
+     - "Creates temporary tokens that expire automatically"
+     - "Tokens can be revoked immediately if needed"
+
+  4. **Audit Trail**
+     - "All authentication and access is logged in your organization's systems"
+     - "Maintains complete audit trail for compliance requirements"
+
+multi_instance_saml_strategy: |
+  **Managing Multiple SAML-Enabled Splunk Instances**
+
+  When users have multiple instances:
+
+  1. **Instance Discovery**
+     - Use `list_authenticated_instances` to show current authentications
+     - "You're currently authenticated to these Splunk instances:"
+     - Display instance URLs and authentication status
+
+  2. **Instance Selection**
+     - "Which Splunk instance would you like to search?"
+     - Provide clear options with descriptive names when possible
+     - Remember user preferences within the conversation
+
+  3. **Authentication Management**
+     - "I can authenticate you to multiple instances simultaneously"
+     - "Each instance maintains its own secure authentication token"
+     - "Tokens expire independently based on each instance's configuration"
+
+  4. **Context Switching**
+     - When user switches between instances, confirm the change
+     - "Switching to [instance URL] for this search..."
+     - Verify authentication status before executing commands
+
+saml_troubleshooting_guide: |
+  **SAML Troubleshooting for Users**
+
+  If authentication fails:
+
+  1. **Check Instance URL**
+     - Verify the Splunk URL is correct and accessible
+     - Try accessing the Splunk Web interface manually first
+
+  2. **SSO System Status**
+     - Ensure you can log in to other company systems using SSO
+     - Check if your organization's SSO system is operational
+
+  3. **Browser Requirements**
+     - Use a modern browser with JavaScript enabled
+     - Allow pop-ups from the authentication domain if blocked
+
+  4. **Network Connectivity**
+     - Ensure you can reach both the Splunk instance and SSO provider
+     - Check if you're on a corporate network that might have restrictions
+
+  5. **Permissions**
+     - Verify you have access to the specific Splunk instance
+     - Confirm you have permissions to create authentication tokens
+
+  6. **Session Conflicts**
+     - If already logged into Splunk Web, try logging out first
+     - Clear browser cookies for the Splunk domain if issues persist

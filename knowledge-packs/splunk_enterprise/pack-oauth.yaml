@@ -1,0 +1,122 @@
+# Splunk Community Pack - OAuth Version
+# Supports dynamic OAuth authentication for any Splunk instance
+
+metadata:
+  name: "splunk_community_oauth"
+  version: "1.0.0"
+  description: "Splunk integration with OAuth authentication support"
+  vendor: "Community"
+  license: "MIT"
+  compatibility: "^2.0.0"
+  domain: "security_analytics"
+  category: "SIEM"
+  keywords: ["splunk", "security", "oauth", "siem"]
+
+  # OAuth optimization flags
+  oauth_enabled: true
+  multi_instance: true
+
+connection:
+  type: "rest"
+  base_url: "{SPLUNK_URL}"
+  auth:
+    method: "oauth2"
+    config:
+      # OAuth will be handled dynamically per instance
+      client_id: "{SPLUNK_OAUTH_CLIENT_ID}"
+      instance_url: "{SPLUNK_URL}"
+      header: "Authorization"
+      format: "Bearer {token}"
+      scopes: ["search", "admin"]
+  timeout: 30
+  verify_ssl: false
+
+# OAuth authentication tools
+tools:
+  authenticate_splunk_instance:
+    type: "execute"
+    display_name: "🔐 Authenticate to Splunk Instance"
+    description: "Start OAuth authentication flow for a Splunk instance"
+    business_purpose: "Enable secure access to Splunk without storing credentials"
+    endpoint: "/trigger_oauth_authentication"
+    method: "MCP_TOOL"  # This calls the MCP tool directly
+
+    parameters:
+      - name: "instance_url"
+        type: "string"
+        required: true
+        description: "Splunk instance URL (e.g., https://company.splunkcloud.com)"
+
+      - name: "client_id"
+        type: "string"
+        required: true
+        description: "OAuth client ID from your Splunk app"
+
+  check_splunk_auth:
+    type: "search"
+    display_name: "🔍 Check Authentication Status"
+    description: "Check if authenticated to a Splunk instance"
+    endpoint: "/check_oauth_status"
+    method: "MCP_TOOL"
+
+    parameters:
+      - name: "instance_url"
+        type: "string"
+        required: true
+        description: "Splunk instance URL to check"
+
+  # Standard search tool (will use OAuth token automatically)
+  execute_splunk_search:
+    type: "search"
+    display_name: "🔍 Execute Splunk Search"
+    description: "Run SPL queries with OAuth authentication"
+    business_purpose: "Execute searches on OAuth-authenticated Splunk instances"
+    endpoint: "/services/search/jobs/oneshot"
+    method: "POST"
+
+    parameters:
+      - name: "search_query"
+        type: "string"
+        required: true
+        description: "SPL search query"
+
+      - name: "earliest_time"
+        type: "string"
+        required: false
+        default: "-1h"
+
+      - name: "latest_time"
+        type: "string"
+        required: false
+        default: "now"
+
+      - name: "max_results"
+        type: "integer"
+        required: false
+        default: 100
+
+    form_data:
+      search: "search {search_query}"
+      earliest_time: "{earliest_time}"
+      latest_time: "{latest_time}"
+      count: "{max_results}"
+      output_mode: "json"
+      exec_mode: "oneshot"
+
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+
+    transform:
+      type: "jq"
+      expression: ".results"
+
+# Include existing modular tools
+structure:
+  tools:
+    - "tools/data-discovery-tools.yaml"
+    - "tools/guardrails-tools.yaml"
+    - "tools/knowledge-objects-tools.yaml"
+    - "tools/system-info-tools.yaml"
+  prompts:
+    - "prompts/search-prompts.yaml"
+    - "prompts/oauth-prompts.yaml"

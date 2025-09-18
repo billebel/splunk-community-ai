@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  catalyst-mcp:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mcp-gateway
+    container_name: catalyst-mcp-server
+    environment:
+      # Basic MCP Configuration
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+
+      # Splunk Configuration
+      - SPLUNK_HOST=${SPLUNK_HOST}
+      - SPLUNK_TOKEN=${SPLUNK_TOKEN}
+      - SPLUNK_USERNAME=${SPLUNK_USERNAME}
+      - SPLUNK_PASSWORD=${SPLUNK_PASSWORD}
+
+      # OAuth/SAML Configuration
+      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
+      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
+      - SAML_SSO_URL=${SAML_SSO_URL}
+
+      # Knowledge Packs Configuration
+      - PACKS_DIRECTORY=/app/knowledge-packs
+      - CORE_PACKS=${CORE_PACKS:-splunk_enterprise,splunk_cloud}
+
+      # Security
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      - API_KEY=${API_KEY}
+
+    ports:
+      - "${MCP_PORT:-8000}:8000"
+    volumes:
+      # Mount knowledge packs for development
+      - ./knowledge-packs:/app/knowledge-packs:ro
+      # Mount logs directory
+      - ./logs:/app/logs
+      # Mount config if needed
+      - ./config:/app/config:ro
+    networks:
+      - mcp-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Redis for session storage
+  redis:
+    image: redis:7-alpine
+    container_name: catalyst-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - mcp-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+
+networks:
+  mcp-network:
+    driver: bridge
+
+volumes:
+  redis-data:

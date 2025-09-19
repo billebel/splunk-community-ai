@@ -1,0 +1,262 @@
+# Makefile for Docker MCP Gateway operations
+# Provides convenient commands for managing Catalyst MCP Gateway
+
+SHELL := /bin/bash
+.DEFAULT_GOAL := help
+
+# Configuration
+SERVER_NAME ?= splunk-catalyst
+IMAGE_NAME ?= splunk-community-ai/catalyst-mcp
+IMAGE_TAG ?= latest
+COMPOSE_FILE ?= docker-compose.mcp-gateway.yml
+
+# Colors for output
+BLUE := \033[0;34m
+GREEN := \033[0;32m
+YELLOW := \033[1;33m
+RED := \033[0;31m
+NC := \033[0m # No Color
+
+# Helper function to print colored output
+define print_header
+	@echo -e "$(BLUE)🚀 $(1)$(NC)"
+	@echo "=================================="
+endef
+
+define print_success
+	@echo -e "$(GREEN)✅ $(1)$(NC)"
+endef
+
+define print_warning
+	@echo -e "$(YELLOW)⚠️  $(1)$(NC)"
+endef
+
+define print_error
+	@echo -e "$(RED)❌ $(1)$(NC)"
+endef
+
+.PHONY: help
+help: ## Show this help message
+	@echo "Catalyst MCP Gateway Management"
+	@echo "================================"
+	@echo "Available commands:"
+	@echo ""
+	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	@echo ""
+	@echo "Examples:"
+	@echo "  make setup          # Initial setup"
+	@echo "  make start          # Start gateway and connect Claude"
+	@echo "  make logs           # View server logs"
+	@echo "  make dev            # Start development environment"
+
+.PHONY: check-prereqs
+check-prereqs: ## Check prerequisites
+	$(call print_header,Checking Prerequisites)
+	@command -v docker >/dev/null 2>&1 || { $(call print_error,"Docker not found"); exit 1; }
+	@command -v docker-compose >/dev/null 2>&1 || { $(call print_error,"Docker Compose not found"); exit 1; }
+	@docker mcp --help >/dev/null 2>&1 || { $(call print_error,"Docker MCP plugin not found"); exit 1; }
+	$(call print_success,"All prerequisites satisfied")
+
+.PHONY: build
+build: ## Build the MCP server image
+	$(call print_header,Building MCP Server Image)
+	docker build -f docker/Dockerfile.mcp-gateway -t $(IMAGE_NAME):$(IMAGE_TAG) .
+	$(call print_success,"Image built: $(IMAGE_NAME):$(IMAGE_TAG)")
+
+.PHONY: setup
+setup: check-prereqs build ## Complete setup (build + register + enable)
+	$(call print_header,Setting up MCP Gateway)
+	@# Remove existing server if it exists
+	@docker mcp server remove $(SERVER_NAME) 2>/dev/null || true
+	@# Register new server
+	docker mcp server add $(SERVER_NAME) \
+		--image $(IMAGE_NAME):$(IMAGE_TAG) \
+		--name "Splunk Catalyst MCP Server" \
+		--description "Catalyst MCP server for Splunk integration" \
+		--local true
+	@# Enable server
+	docker mcp server enable $(SERVER_NAME)
+	$(call print_success,"MCP Gateway setup completed")
+	@echo ""
+	@echo "Next steps:"
+	@echo "1. Edit .env file with your Splunk configuration"
+	@echo "2. Run 'make start' to start the gateway"
+
+.PHONY: start
+start: ## Start MCP Gateway and connect Claude
+	$(call print_header,Starting MCP Gateway)
+	@# Check if server exists
+	@docker mcp server list | grep -q $(SERVER_NAME) || { $(call print_error,"Server not found. Run 'make setup' first"); exit 1; }
+	@# Enable server if not enabled
+	@docker mcp server enable $(SERVER_NAME) 2>/dev/null || true
+	@# Start gateway
+	@echo "Starting gateway in background..."
+	@docker mcp gateway run &
+	@sleep 5
+	@# Connect Claude
+	@echo "Connecting Claude client..."
+	@docker mcp client connect claude || { $(call print_warning,"Failed to connect Claude automatically"); }
+	$(call print_success,"Gateway started and Claude connected")
+	@echo ""
+	@echo "Gateway is running. Use 'make stop' to stop it."
+	@echo "Use 'make logs' to view server logs."
+
+.PHONY: start-dev
+start-dev: ## Start development environment with Docker Compose
+	$(call print_header,Starting Development Environment)
+	docker-compose -f $(COMPOSE_FILE) up --build
+	$(call print_success,"Development environment started")
+
+.PHONY: stop
+stop: ## Stop MCP Gateway
+	$(call print_header,Stopping MCP Gateway)
+	@docker mcp gateway stop 2>/dev/null || { $(call print_warning,"Gateway was not running"); }
+	$(call print_success,"Gateway stopped")
+
+.PHONY: restart
+restart: stop start ## Restart MCP Gateway
+	$(call print_header,Restarting MCP Gateway)
+
+.PHONY: status
+status: ## Show gateway and server status
+	$(call print_header,MCP Gateway Status)
+	@echo "Gateway Status:"
+	@docker mcp gateway status 2>/dev/null || echo "Gateway not running"
+	@echo ""
+	@echo "Server Status:"
+	@docker mcp server list
+	@echo ""
+	@echo "Connected Clients:"
+	@docker mcp client list 2>/dev/null || echo "No clients connected"
+
+.PHONY: logs
+logs: ## View server logs
+	$(call print_header,Server Logs)
+	docker mcp server logs $(SERVER_NAME) --follow
+
+.PHONY: gateway-logs
+gateway-logs: ## View gateway logs
+	$(call print_header,Gateway Logs)
+	docker mcp gateway logs --follow
+
+.PHONY: connect-claude
+connect-claude: ## Connect Claude client
+	$(call print_header,Connecting Claude)
+	docker mcp client connect claude
+	$(call print_success,"Claude connected")
+
+.PHONY: connect-vscode
+connect-vscode: ## Connect VS Code client
+	$(call print_header,Connecting VS Code)
+	docker mcp client connect vscode
+	$(call print_success,"VS Code connected")
+
+.PHONY: disconnect
+disconnect: ## Disconnect all clients
+	$(call print_header,Disconnecting Clients)
+	@docker mcp client disconnect --all 2>/dev/null || { $(call print_warning,"No clients to disconnect"); }
+	$(call print_success,"All clients disconnected")
+
+.PHONY: clean
+clean: ## Remove server and clean up
+	$(call print_header,Cleaning Up)
+	@docker mcp gateway stop 2>/dev/null || true
+	@docker mcp server remove $(SERVER_NAME) 2>/dev/null || { $(call print_warning,"Server not found"); }
+	@docker rmi $(IMAGE_NAME):$(IMAGE_TAG) 2>/dev/null || { $(call print_warning,"Image not found"); }
+	$(call print_success,"Cleanup completed")
+
+.PHONY: rebuild
+rebuild: clean setup ## Clean rebuild (remove + setup)
+	$(call print_header,Rebuild Completed)
+
+.PHONY: test
+test: ## Test server connectivity
+	$(call print_header,Testing Server Connectivity)
+	@docker mcp server list | grep -q $(SERVER_NAME) || { $(call print_error,"Server not found"); exit 1; }
+	@curl -f http://localhost:8000/health 2>/dev/null || { $(call print_error,"Server health check failed"); exit 1; }
+	$(call print_success,"Server is healthy")
+
+.PHONY: env-example
+env-example: ## Create .env from example
+	$(call print_header,Creating Environment File)
+	@if [ ! -f .env ]; then \
+		cp mcp-gateway.env .env; \
+		$(call print_success,".env file created from template"); \
+		echo "Please edit .env with your Splunk configuration"; \
+	else \
+		$(call print_warning,".env file already exists"); \
+	fi
+
+.PHONY: docker-compose-up
+docker-compose-up: ## Start with docker-compose (development)
+	$(call print_header,Starting with Docker Compose)
+	docker-compose -f $(COMPOSE_FILE) up --build -d
+	$(call print_success,"Services started with Docker Compose")
+
+.PHONY: docker-compose-down
+docker-compose-down: ## Stop docker-compose services
+	$(call print_header,Stopping Docker Compose Services)
+	docker-compose -f $(COMPOSE_FILE) down
+	$(call print_success,"Services stopped")
+
+.PHONY: credentials
+credentials: ## Set Splunk credentials securely
+	$(call print_header,Setting Splunk Credentials)
+	@read -p "Splunk Host: " host && docker mcp credentials set $(SERVER_NAME) SPLUNK_HOST "$$host"
+	@read -s -p "Splunk Token: " token && echo && docker mcp credentials set $(SERVER_NAME) SPLUNK_TOKEN "$$token"
+	$(call print_success,"Credentials set securely")
+
+.PHONY: info
+info: ## Show configuration info
+	$(call print_header,Configuration Information)
+	@echo "Server Name: $(SERVER_NAME)"
+	@echo "Image: $(IMAGE_NAME):$(IMAGE_TAG)"
+	@echo "Compose File: $(COMPOSE_FILE)"
+	@echo ""
+	@echo "Knowledge Packs Available:"
+	@echo "- splunk_enterprise: Core Splunk Enterprise tools"
+	@echo "- splunk_cloud: Splunk Cloud Platform tools"
+	@echo "- splunk_oauth: OAuth authentication flows"
+	@echo "- splunk_saml: SAML/SSO authentication flows"
+	@echo ""
+	@echo "Useful Commands:"
+	@echo "  View logs: make logs"
+	@echo "  Check status: make status"
+	@echo "  Connect clients: make connect-claude"
+	@echo "  Development: make start-dev"
+
+# Advanced targets
+.PHONY: multi-env
+multi-env: ## Set up multiple environments (dev/staging/prod)
+	$(call print_header,Setting up Multiple Environments)
+	@# Development
+	docker mcp server add splunk-dev \
+		--image $(IMAGE_NAME):dev \
+		--name "Splunk Dev Environment" \
+		--local true
+	@# Staging
+	docker mcp server add splunk-staging \
+		--image $(IMAGE_NAME):staging \
+		--name "Splunk Staging Environment" \
+		--local true
+	@# Production
+	docker mcp server add splunk-prod \
+		--image $(IMAGE_NAME):latest \
+		--name "Splunk Production Environment" \
+		--local true
+	$(call print_success,"Multiple environments configured")
+
+.PHONY: health-check
+health-check: ## Comprehensive health check
+	$(call print_header,Comprehensive Health Check)
+	@echo "Checking Docker..."
+	@docker --version
+	@echo "Checking MCP plugin..."
+	@docker mcp --version 2>/dev/null || echo "MCP plugin version unavailable"
+	@echo "Checking server registration..."
+	@docker mcp server list | grep $(SERVER_NAME) || echo "Server not registered"
+	@echo "Checking gateway status..."
+	@docker mcp gateway status 2>/dev/null || echo "Gateway not running"
+	@echo "Checking server health..."
+	@curl -f http://localhost:8000/health 2>/dev/null || echo "Server not responding"
+	$(call print_success,"Health check completed")

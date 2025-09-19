@@ -253,6 +253,66 @@ environments:
         enabled: true
         mask_unknown_sensitive: true
 
+# Management Operations Controls
+management_operations:
+  # Lookup table management
+  lookup_operations:
+    enabled: true
+    max_file_size_mb: 10
+    max_rows: 100000
+    allowed_formats: ["csv"]
+    require_data_validation: true
+    audit_all_changes: true
+
+  # Search macro management
+  macro_operations:
+    enabled: true
+    max_definition_length: 2000
+    require_spl_validation: true
+    block_dangerous_commands: true
+    audit_all_changes: true
+
+  # Knowledge object deletion
+  deletion_operations:
+    enabled: true
+    require_confirmation: true
+    admin_approval_required: false
+    audit_all_deletions: true
+
+# Role-based management permissions
+management_permissions:
+  admin:
+    can_create_lookups: true
+    can_update_lookups: true
+    can_delete_lookups: true
+    can_create_macros: true
+    can_update_macros: true
+    can_delete_macros: true
+
+  power_user:
+    can_create_lookups: true
+    can_update_lookups: true
+    can_delete_lookups: false
+    can_create_macros: true
+    can_update_macros: true
+    can_delete_macros: false
+
+  standard_user:
+    can_create_lookups: false
+    can_update_lookups: false
+    can_delete_lookups: false
+    can_create_macros: false
+    can_update_macros: false
+    can_delete_macros: false
+
+  readonly_user:
+    can_create_lookups: false
+    can_update_lookups: false
+    can_delete_lookups: false
+    can_create_macros: false
+    can_update_macros: false
+    can_delete_macros: false
+
 # Notification settings
 notifications:
   # Alert on security violations
@@ -260,15 +320,22 @@ notifications:
     enabled: true
     notify_admin: true
     notify_security_team: true
-    
+
   # Performance threshold alerts
   performance_alerts:
     enabled: true
     slow_search_threshold_seconds: 60
     high_result_count_threshold: 5000
-    
+
   # Privacy compliance notifications
   privacy_notifications:
     enabled: true
     data_masking_failures: true
     sensitive_data_exposure: true
+
+  # Management operation alerts
+  management_alerts:
+    enabled: true
+    knowledge_object_changes: true
+    large_lookup_uploads: true
+    deletion_attempts: true

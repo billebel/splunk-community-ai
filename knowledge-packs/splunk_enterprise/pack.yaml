@@ -92,11 +92,13 @@ structure:
   tools:
     - "tools/data-discovery-tools.yaml"
     - "tools/guardrails-tools.yaml"
-    - "tools/knowledge-objects-tools.yaml" 
+    - "tools/knowledge-objects-tools.yaml"
+    - "tools/knowledge-management-tools.yaml"
     - "tools/system-info-tools.yaml"
   prompts:
     - "prompts/search-prompts.yaml"
     - "prompts/dashboard-prompts.yaml"
     - "prompts/scheduled-search-prompts.yaml"
     - "prompts/knowledge-objects-prompts.yaml"
+    - "prompts/management-prompts.yaml"
     - "prompts/system-diagnostics-prompts.yaml"

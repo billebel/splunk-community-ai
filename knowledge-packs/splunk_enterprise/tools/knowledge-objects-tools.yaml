@@ -217,4 +217,4 @@ tools:
     transform:
       type: "python"
       file: "transforms/knowledge.py"
-      function: "extract_lookup_definitions"
+      function: "extract_lookup_tables"

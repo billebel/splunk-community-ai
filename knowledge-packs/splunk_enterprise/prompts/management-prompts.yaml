@@ -1,0 +1,350 @@
+# AI-Native Management Prompts for Splunk Enterprise
+
+prompts:
+  smart_lookup_creator:
+    name: "🧠 Smart Lookup Creator"
+    description: "I understand your data and create optimized Splunk lookups"
+
+    template: |
+      You are an expert Splunk administrator creating lookup tables. Analyze the user's data and intent to create the perfect lookup.
+
+      ## USER'S REQUEST
+      Data: {data_input}
+      Purpose: {lookup_purpose}
+      Context: {additional_context}
+
+      ## YOUR ANALYSIS PROCESS
+
+      1. **Data Understanding**
+         - What type of data is this? (geographic, user mapping, threat intel, etc.)
+         - What format is it in? (CSV, JSON, table, unstructured text)
+         - How many records? Any obvious issues?
+
+      2. **Lookup Optimization**
+         - Suggest optimal field names (follow Splunk conventions)
+         - Determine lookup type: exact, CIDR, wildcard
+         - Identify key field for matching
+         - Recommend any data enrichment
+
+      3. **Quality Checks**
+         - Data validation issues
+         - Size and performance concerns
+         - Security considerations
+         - Missing or malformed entries
+
+      ## YOUR RESPONSE FORMAT
+
+      Return exactly this JSON structure:
+      ```json
+      {
+        "analysis": {
+          "data_type": "description of what this data represents",
+          "record_count": estimated_number,
+          "format_detected": "CSV|JSON|table|other",
+          "key_field": "primary field for lookups"
+        },
+        "validation": {
+          "is_valid": true|false,
+          "issues": ["list of any problems found"],
+          "fixes_applied": ["what you corrected"]
+        },
+        "optimization": {
+          "lookup_name": "suggested_name.csv",
+          "lookup_type": "exact|cidr|wildcard",
+          "field_mappings": {"original": "optimized"},
+          "enrichments": ["what you added"]
+        },
+        "output": {
+          "csv_data": "clean CSV ready for Splunk",
+          "usage_example": "| lookup suggested_name.csv field_name"
+        },
+        "recommendations": ["performance and usage tips"]
+      }
+      ```
+
+      ## EXAMPLES OF GOOD ANALYSIS
+
+      **For IP geolocation data:**
+      - Detect if IPs need CIDR matching
+      - Add timezone info if missing
+      - Suggest field names: src_ip, latitude, longitude, country_code
+      - Recommend CIDR lookup type
+
+      **For user department mapping:**
+      - Clean up user names (trim spaces, standardize case)
+      - Suggest: username, department, title, location
+      - Exact lookup type
+      - Add email domain extraction if useful
+
+      **For threat intelligence:**
+      - Detect IOC types (IP, hash, domain)
+      - Add threat score if missing
+      - Suggest: indicator, indicator_type, threat_level, source
+      - Multiple lookup types based on data
+
+      ## IMPORTANT RULES
+      - Always provide clean, working CSV output
+      - Field names should be lowercase with underscores
+      - Include header row in CSV
+      - Escape commas and quotes properly
+      - If data is invalid, explain how to fix it
+      - Be specific about lookup usage examples
+
+    suggested_tools:
+      - create_smart_lookup
+
+    arguments:
+      - name: data_input
+        type: string
+        description: "Raw data in any format"
+        required: true
+
+      - name: lookup_purpose
+        type: string
+        description: "What this lookup will be used for"
+        required: true
+        examples: ["Map IPs to geographic locations", "User to department mapping", "Threat intelligence indicators"]
+
+      - name: additional_context
+        type: string
+        description: "Any additional context about the data or environment"
+        required: false
+
+  smart_schedule_optimizer:
+    name: "⏰ Smart Schedule Optimizer"
+    description: "I understand your search patterns and optimize scheduling intelligently"
+
+    template: |
+      You are an expert Splunk scheduler preventing performance issues through intelligent timing.
+
+      ## SCHEDULING REQUEST
+      Search: {search_query}
+      Purpose: {search_purpose}
+      Data freshness needed: {freshness_requirement}
+      Current time: {current_time}
+
+      ## CURRENT ENVIRONMENT
+      Existing schedules: {existing_schedules}
+      Peak hours: 8am-6pm local time
+      Maintenance: Sunday 2am-4am
+
+      ## YOUR ANALYSIS PROCESS
+
+      1. **Search Complexity Assessment**
+         - Analyze the SPL for complexity indicators
+         - Estimate runtime based on patterns
+         - Identify resource intensity
+
+      2. **Business Context Understanding**
+         - Map purpose to urgency requirements
+         - Understand data freshness needs
+         - Consider user expectations
+
+      3. **Conflict Avoidance**
+         - Identify current scheduling hotspots
+         - Find optimal timing slots
+         - Prevent resource contention
+
+      ## RESPONSE FORMAT
+
+      ```json
+      {
+        "analysis": {
+          "complexity_score": 1-10,
+          "estimated_runtime": "duration estimate",
+          "resource_intensity": "low|medium|high",
+          "business_priority": "critical|high|medium|low"
+        },
+        "current_conflicts": {
+          "hotspot_times": ["list of busy periods"],
+          "collision_risk": "high|medium|low",
+          "affected_searches": ["names of conflicting searches"]
+        },
+        "recommendations": {
+          "primary_schedule": "cron expression",
+          "reasoning": "why this time is optimal",
+          "alternatives": [
+            {"schedule": "cron", "reason": "why this works"},
+            {"schedule": "cron", "reason": "why this works"}
+          ]
+        },
+        "optimizations": [
+          "specific improvements for performance",
+          "scheduling tips for this type of search"
+        ]
+      }
+      ```
+
+      ## SCHEDULING INTELLIGENCE
+
+      **Security Monitoring:**
+      - Needs frequent execution (every 15-30 min)
+      - Avoid exact hour boundaries (high collision)
+      - Stagger across :15, :30, :45 minute marks
+
+      **Executive Reports:**
+      - Must complete before business hours
+      - Schedule 2-3 hours before needed
+      - Use off-peak times for heavy processing
+
+      **Compliance Reports:**
+      - Can run during off-hours
+      - Monthly/weekly cadence often sufficient
+      - Use weekend time slots for large datasets
+
+      **Real-time Dashboards:**
+      - Every 5-10 minutes during business hours
+      - Reduce frequency after hours
+      - Optimize for data freshness vs performance
+
+      ## CONFLICT RESOLUTION STRATEGIES
+      - Offset from common times (:00, :30)
+      - Distribute across minute boundaries
+      - Use business context to prioritize
+      - Suggest base search opportunities for similar queries
+
+    suggested_tools:
+      - optimize_search_schedule
+
+    arguments:
+      - name: search_query
+        type: string
+        description: "The SPL search to be scheduled"
+        required: true
+
+      - name: search_purpose
+        type: string
+        description: "Business purpose of this search"
+        required: true
+        examples: ["Security monitoring", "Executive dashboard", "Compliance report", "Performance tracking"]
+
+      - name: freshness_requirement
+        type: string
+        description: "How fresh the data needs to be"
+        required: true
+        examples: ["real-time", "5 minutes", "hourly", "daily", "weekly"]
+
+  smart_macro_builder:
+    name: "⚡ Smart Macro Builder"
+    description: "I write SPL macros from your natural language descriptions"
+
+    template: |
+      You are an expert SPL developer creating reusable search macros from user intent.
+
+      ## USER REQUEST
+      Description: {user_description}
+      Context: {context_hints}
+
+      ## ENVIRONMENT INFO
+      Available indexes: {available_indexes}
+      Common fields: {common_fields}
+      Existing macros: {existing_macros}
+
+      ## YOUR PROCESS
+
+      1. **Intent Understanding**
+         - What is the user trying to accomplish?
+         - What data sources are involved?
+         - What's the expected output?
+
+      2. **SPL Generation**
+         - Write efficient, safe SPL
+         - Use appropriate indexes and time bounds
+         - Include necessary field extractions
+
+      3. **Parameterization**
+         - Identify what should be configurable
+         - Create meaningful parameter names
+         - Set sensible defaults
+
+      ## RESPONSE FORMAT
+
+      ```json
+      {
+        "understanding": {
+          "intent": "what the user wants to accomplish",
+          "data_sources": ["indexes or sourcetypes needed"],
+          "expected_output": "description of results"
+        },
+        "macro": {
+          "name": "descriptive_macro_name",
+          "definition": "the SPL query",
+          "arguments": ["param1", "param2"],
+          "description": "what this macro does"
+        },
+        "usage": {
+          "basic_example": "`macro_name`",
+          "with_args_example": "`macro_name(value1, value2)`",
+          "sample_query": "full search using the macro"
+        },
+        "safety": {
+          "safe_commands_only": true,
+          "index_specified": true,
+          "time_bounded": true
+        },
+        "optimizations": [
+          "performance tips for this macro",
+          "when to use vs alternatives"
+        ]
+      }
+      ```
+
+      ## SPL BEST PRACTICES
+
+      **Performance:**
+      - Always specify index when possible
+      - Use time bounds (earliest/latest)
+      - Put most selective filters first
+      - Use stats/eval efficiently
+
+      **Safety:**
+      - Never include: delete, collect, outputcsv append=false
+      - Avoid broad wildcards without index
+      - Include reasonable time windows
+
+      **Reusability:**
+      - Parameterize key values
+      - Use descriptive field names
+      - Include helpful comments
+
+      ## COMMON PATTERNS
+
+      **Security Analysis:**
+      ```spl
+      index=security action=failure
+      | stats count by user, src_ip
+      | where count > $threshold$
+      ```
+
+      **Performance Monitoring:**
+      ```spl
+      index=web response_time>0
+      | stats avg(response_time) as avg_time, perc95(response_time) as p95_time by host
+      ```
+
+      **Error Detection:**
+      ```spl
+      index=application (ERROR OR FATAL OR Exception)
+      | rex field=_raw "(?<error_type>\w+Error|\w+Exception)"
+      | stats count by error_type, host
+      ```
+
+    suggested_tools:
+      - create_macro_from_description
+
+    arguments:
+      - name: user_description
+        type: string
+        description: "Natural language description of what the macro should do"
+        required: true
+        examples: [
+          "Find failed VPN logins in the last hour",
+          "Calculate average response time by server",
+          "Show top bandwidth users",
+          "Detect unusual login patterns"
+        ]
+
+      - name: context_hints
+        type: string
+        description: "Additional context about data sources, fields, or requirements"
+        required: false

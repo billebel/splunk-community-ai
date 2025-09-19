@@ -1,0 +1,175 @@
+# Knowledge Object Management Tools - Following Existing Architecture Patterns
+
+tools:
+  create_lookup:
+    type: "create"
+    display_name: "📊 Create Lookup Table"
+    description: "Create a new Splunk lookup table from data with AI optimization"
+    business_purpose: "Transform raw data into optimized Splunk lookup tables"
+
+    key_capabilities:
+      - "Analyzes data format and suggests optimal structure"
+      - "Determines best lookup type (CSV vs KV Store)"
+      - "Creates both lookup file and transform definition"
+      - "Validates data quality and performance impact"
+
+    parameters:
+      - name: "lookup_name"
+        type: "string"
+        required: true
+        description: "Name for the lookup (will add .csv if needed)"
+        validation: "^[a-zA-Z][a-zA-Z0-9_]*$"
+        examples: ["office_locations", "user_departments", "threat_indicators"]
+
+      - name: "raw_data"
+        type: "string"
+        required: true
+        description: "Raw data in any format (CSV, JSON, table, etc.)"
+        max_size: "10MB"
+
+      - name: "lookup_purpose"
+        type: "string"
+        required: true
+        description: "What this lookup will be used for"
+        examples: [
+          "Map IP addresses to geographic locations",
+          "Match usernames to departments and titles",
+          "Correlate threat indicators with risk levels"
+        ]
+
+      - name: "app_context"
+        type: "string"
+        required: false
+        default: "search"
+        description: "Splunk app where lookup should be created"
+
+    # Create lookup transform definition
+    endpoint: "/services/data/transforms/lookups"
+    method: "POST"
+
+    form_data:
+      name: "{lookup_name}"
+      filename: "{lookup_name}.csv"
+      case_sensitive_match: "false"
+
+    transform:
+      type: "python"
+      file: "transforms/knowledge_management.py"
+      function: "create_lookup"
+
+  update_lookup:
+    type: "update"
+    display_name: "📝 Update Lookup Content"
+    description: "Update existing lookup table with new data"
+    business_purpose: "Maintain lookup tables with fresh data"
+
+    parameters:
+      - name: "lookup_name"
+        type: "string"
+        required: true
+        description: "Name of existing lookup to update"
+
+      - name: "new_data"
+        type: "string"
+        required: true
+        description: "Updated data in CSV format"
+        max_size: "10MB"
+
+      - name: "merge_strategy"
+        type: "string"
+        required: false
+        default: "replace"
+        options: ["replace", "append", "merge"]
+        description: "How to handle existing data"
+
+    endpoint: "/services/data/lookup-table-files/{lookup_name}.csv"
+    method: "POST"
+
+    transform:
+      type: "python"
+      file: "transforms/knowledge_management.py"
+      function: "update_lookup"
+
+  create_macro:
+    type: "create"
+    display_name: "⚡ Create Search Macro"
+    description: "Create reusable search macro from description"
+    business_purpose: "Create reusable search patterns"
+
+    parameters:
+      - name: "macro_name"
+        type: "string"
+        required: true
+        description: "Name for the macro"
+        validation: "^[a-zA-Z][a-zA-Z0-9_]*$"
+
+      - name: "description"
+        type: "string"
+        required: true
+        description: "What the macro should do"
+        examples: [
+          "Find failed login attempts with more than 3 failures per user",
+          "Calculate 95th percentile response time by server",
+          "Show top 10 bandwidth consumers"
+        ]
+
+      - name: "parameters"
+        type: "string"
+        required: false
+        description: "Comma-separated parameter names (optional)"
+        examples: ["threshold", "time_window,threshold"]
+
+    endpoint: "/services/admin/macros"
+    method: "POST"
+
+    transform:
+      type: "python"
+      file: "transforms/knowledge_management.py"
+      function: "create_macro"
+
+  delete_lookup:
+    type: "delete"
+    display_name: "🗑️ Delete Lookup Table"
+    description: "Remove lookup table and its definition"
+    business_purpose: "Clean up unused lookup tables"
+
+    parameters:
+      - name: "lookup_name"
+        type: "string"
+        required: true
+        description: "Name of lookup to delete"
+
+      - name: "confirm_deletion"
+        type: "boolean"
+        required: true
+        description: "Confirm you want to delete this lookup"
+
+    endpoint: "/services/data/transforms/lookups/{lookup_name}"
+    method: "DELETE"
+
+    transform:
+      type: "python"
+      file: "transforms/knowledge_management.py"
+      function: "delete_lookup"
+
+  validate_lookup_data:
+    type: "read"
+    display_name: "🔍 Validate Lookup Data"
+    description: "Check data quality before creating lookup"
+    business_purpose: "Prevent performance issues and ensure data quality"
+
+    parameters:
+      - name: "data_sample"
+        type: "string"
+        required: true
+        description: "Sample of the data to validate"
+
+      - name: "intended_use"
+        type: "string"
+        required: true
+        description: "How the lookup will be used"
+
+    transform:
+      type: "python"
+      file: "transforms/knowledge_management.py"
+      function: "validate_lookup_data"

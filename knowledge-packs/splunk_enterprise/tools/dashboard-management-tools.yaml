@@ -1,0 +1,331 @@
+# Dashboard Management Tools - AI-Native Dashboard Creation and Management
+
+tools:
+  create_dashboard:
+    type: "create"
+    display_name: "📊 Create Dashboard"
+    description: "Create a new Splunk dashboard with AI-powered layout and visualization recommendations"
+    business_purpose: "Transform business requirements into optimized dashboards with intelligent panel selection"
+
+    key_capabilities:
+      - "Understands business intent and recommends appropriate visualizations"
+      - "Creates both Classic XML and Dashboard Studio formats"
+      - "Optimizes panel layout for performance and usability"
+      - "Suggests base searches to reduce resource usage"
+      - "Validates search complexity and provides optimization tips"
+
+    best_used_for:
+      - "Security monitoring dashboards with real-time metrics"
+      - "Executive dashboards with KPI summaries"
+      - "Operational dashboards for system health monitoring"
+      - "Compliance dashboards for audit reporting"
+
+    usage_examples:
+      - "Security team: 'Create a dashboard to monitor failed logins and threat activity' → AI generates appropriate panels"
+      - "Executive: 'I need a revenue dashboard with trends and top products' → AI optimizes for executive viewing"
+      - "Operations: 'Build a system health dashboard' → AI creates performance monitoring panels"
+
+    parameters:
+      - name: "dashboard_name"
+        type: "string"
+        required: true
+        description: "Name for the dashboard"
+        validation: "^[a-zA-Z][a-zA-Z0-9_\\s]*$"
+        examples: ["Security Monitoring", "Executive Summary", "System Health Overview"]
+
+      - name: "business_purpose"
+        type: "string"
+        required: true
+        description: "What business need this dashboard serves"
+        examples: [
+          "Monitor security threats and failed authentication attempts",
+          "Track revenue performance and sales trends for executives",
+          "Monitor system performance and application health",
+          "Compliance reporting for audit requirements"
+        ]
+
+      - name: "target_audience"
+        type: "string"
+        required: true
+        description: "Who will use this dashboard"
+        examples: ["Security analysts", "Executives", "Operations team", "Compliance officers"]
+
+      - name: "data_sources"
+        type: "string"
+        required: true
+        description: "What data sources or indexes to include"
+        examples: [
+          "index=security, index=authentication",
+          "index=sales, index=web, index=inventory",
+          "index=infrastructure, index=application",
+          "index=audit, index=compliance"
+        ]
+
+      - name: "dashboard_type"
+        type: "string"
+        required: false
+        default: "studio"
+        options: ["classic", "studio"]
+        description: "Dashboard format preference"
+
+      - name: "refresh_frequency"
+        type: "string"
+        required: false
+        default: "5 minutes"
+        description: "How often data should refresh"
+        examples: ["real-time", "1 minute", "5 minutes", "15 minutes", "hourly"]
+
+      - name: "app_context"
+        type: "string"
+        required: false
+        default: "search"
+        description: "Splunk app for the dashboard"
+
+    endpoint: "/services/data/ui/views"
+    method: "POST"
+
+    transform:
+      type: "python"
+      file: "transforms/dashboard_management.py"
+      function: "create_dashboard"
+
+    security:
+      requires_approval: false
+      audit_trail: true
+      validate_searches: true
+      performance_check: true
+
+  add_dashboard_panel:
+    type: "update"
+    display_name: "📈 Add Dashboard Panel"
+    description: "Add a new panel to existing dashboard with AI visualization recommendations"
+    business_purpose: "Enhance dashboards with optimized panels based on data characteristics"
+
+    parameters:
+      - name: "dashboard_name"
+        type: "string"
+        required: true
+        description: "Name of existing dashboard"
+
+      - name: "panel_purpose"
+        type: "string"
+        required: true
+        description: "What this panel should show"
+        examples: [
+          "Show failed login attempts over time",
+          "Display top error messages",
+          "Monitor response times by server",
+          "Track user activity patterns"
+        ]
+
+      - name: "search_query"
+        type: "string"
+        required: true
+        description: "SPL query for the panel"
+
+      - name: "panel_position"
+        type: "string"
+        required: false
+        default: "auto"
+        description: "Where to place the panel"
+        examples: ["top-left", "top-right", "bottom", "auto"]
+
+    endpoint: "/services/data/ui/views/{dashboard_name}"
+    method: "POST"
+
+    transform:
+      type: "python"
+      file: "transforms/dashboard_management.py"
+      function: "add_dashboard_panel"
+
+  optimize_dashboard:
+    type: "update"
+    display_name: "🚀 Optimize Dashboard Performance"
+    description: "Analyze and optimize dashboard performance with AI recommendations"
+    business_purpose: "Improve dashboard load times and reduce resource usage"
+
+    parameters:
+      - name: "dashboard_name"
+        type: "string"
+        required: true
+        description: "Name of dashboard to optimize"
+
+      - name: "optimization_focus"
+        type: "string"
+        required: false
+        default: "balanced"
+        options: ["performance", "usability", "balanced"]
+        description: "What to prioritize in optimization"
+
+      - name: "apply_optimizations"
+        type: "boolean"
+        required: false
+        default: false
+        description: "Actually apply recommendations (false = preview only)"
+
+    transform:
+      type: "python"
+      file: "transforms/dashboard_management.py"
+      function: "optimize_dashboard"
+
+  validate_dashboard:
+    type: "read"
+    display_name: "🔍 Validate Dashboard"
+    description: "Analyze dashboard for performance issues and security concerns"
+    business_purpose: "Ensure dashboards follow best practices and security guidelines"
+
+    parameters:
+      - name: "dashboard_name"
+        type: "string"
+        required: true
+        description: "Name of dashboard to validate"
+
+      - name: "validation_scope"
+        type: "string"
+        required: false
+        default: "all"
+        options: ["performance", "security", "usability", "all"]
+        description: "What aspects to validate"
+
+    transform:
+      type: "python"
+      file: "transforms/dashboard_management.py"
+      function: "validate_dashboard"
+
+  clone_dashboard:
+    type: "create"
+    display_name: "📋 Clone Dashboard"
+    description: "Create a copy of existing dashboard with optional modifications"
+    business_purpose: "Quickly create similar dashboards for different teams or use cases"
+
+    parameters:
+      - name: "source_dashboard"
+        type: "string"
+        required: true
+        description: "Name of dashboard to clone"
+
+      - name: "new_dashboard_name"
+        type: "string"
+        required: true
+        description: "Name for the cloned dashboard"
+
+      - name: "modifications"
+        type: "string"
+        required: false
+        description: "What changes to make during cloning"
+        examples: [
+          "Change data sources to different indexes",
+          "Modify time ranges for different use case",
+          "Adjust permissions for different team"
+        ]
+
+    endpoint: "/services/data/ui/views"
+    method: "POST"
+
+    transform:
+      type: "python"
+      file: "transforms/dashboard_management.py"
+      function: "clone_dashboard"
+
+  delete_dashboard:
+    type: "delete"
+    display_name: "🗑️ Delete Dashboard"
+    description: "Remove dashboard with safety checks and dependency validation"
+    business_purpose: "Clean up unused dashboards without breaking dependencies"
+
+    parameters:
+      - name: "dashboard_name"
+        type: "string"
+        required: true
+        description: "Name of dashboard to delete"
+
+      - name: "confirm_deletion"
+        type: "boolean"
+        required: true
+        description: "Confirm you want to delete this dashboard"
+
+      - name: "check_dependencies"
+        type: "boolean"
+        required: false
+        default: true
+        description: "Check if other objects reference this dashboard"
+
+      - name: "backup_before_delete"
+        type: "boolean"
+        required: false
+        default: true
+        description: "Create backup before deletion"
+
+    endpoint: "/services/data/ui/views/{dashboard_name}"
+    method: "DELETE"
+
+    transform:
+      type: "python"
+      file: "transforms/dashboard_management.py"
+      function: "delete_dashboard"
+
+  recommend_visualizations:
+    type: "read"
+    display_name: "🎨 Recommend Visualizations"
+    description: "AI-powered visualization recommendations based on data characteristics"
+    business_purpose: "Choose optimal chart types and layouts for maximum insight"
+
+    parameters:
+      - name: "data_sample"
+        type: "string"
+        required: true
+        description: "Sample of the data to visualize"
+
+      - name: "analysis_intent"
+        type: "string"
+        required: true
+        description: "What insights you're looking for"
+        examples: [
+          "Trends over time",
+          "Comparison between categories",
+          "Distribution analysis",
+          "Correlation analysis",
+          "Anomaly detection"
+        ]
+
+      - name: "audience_level"
+        type: "string"
+        required: false
+        default: "business"
+        options: ["technical", "business", "executive"]
+        description: "Technical level of dashboard audience"
+
+    transform:
+      type: "python"
+      file: "transforms/dashboard_management.py"
+      function: "recommend_visualizations"
+
+  export_dashboard:
+    type: "read"
+    display_name: "📤 Export Dashboard"
+    description: "Export dashboard configuration for backup or migration"
+    business_purpose: "Create portable dashboard definitions for deployment across environments"
+
+    parameters:
+      - name: "dashboard_name"
+        type: "string"
+        required: true
+        description: "Name of dashboard to export"
+
+      - name: "export_format"
+        type: "string"
+        required: false
+        default: "json"
+        options: ["json", "xml", "yaml"]
+        description: "Export format preference"
+
+      - name: "include_data"
+        type: "boolean"
+        required: false
+        default: false
+        description: "Include sample data in export"
+
+    transform:
+      type: "python"
+      file: "transforms/dashboard_management.py"
+      function: "export_dashboard"

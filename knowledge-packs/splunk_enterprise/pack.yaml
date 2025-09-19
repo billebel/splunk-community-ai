@@ -95,6 +95,7 @@ structure:
     - "tools/knowledge-objects-tools.yaml"
     - "tools/knowledge-management-tools.yaml"
     - "tools/schedule-management-tools.yaml"
+    - "tools/dashboard-management-tools.yaml"
     - "tools/system-info-tools.yaml"
   prompts:
     - "prompts/search-prompts.yaml"

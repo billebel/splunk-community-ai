@@ -281,6 +281,35 @@ management_operations:
     block_all_time_searches: true
     audit_all_changes: true
 
+  # Dashboard management
+  dashboard_operations:
+    enabled: true
+    max_dashboards_per_user: 100
+    max_panels_per_dashboard: 15
+    max_search_complexity_score: 8
+    require_performance_validation: true
+    block_wildcard_index_searches: true
+    require_security_validation: true
+    audit_all_changes: true
+
+    # Dashboard security constraints
+    blocked_dashboard_patterns:
+      - "index=_*"              # Block internal index access in dashboards
+      - "| delete"              # Block dangerous commands
+      - "| script"              # Block script execution
+      - "earliest=0"            # Block all-time searches in dashboards
+
+    # Performance thresholds for dashboards
+    performance_limits:
+      max_panels_with_joins: 2
+      max_panels_with_wildcards: 3
+      max_refresh_frequency_seconds: 30
+      min_refresh_frequency_seconds: 300
+
+    # Dashboard types allowed
+    allowed_dashboard_types: ["studio", "classic"]
+    default_dashboard_type: "studio"
+
   # Knowledge object deletion
   deletion_operations:
     enabled: true
@@ -301,6 +330,12 @@ management_permissions:
     can_update_scheduled_searches: true
     can_delete_scheduled_searches: true
     can_optimize_schedules: true
+    can_create_dashboards: true
+    can_update_dashboards: true
+    can_delete_dashboards: true
+    can_clone_dashboards: true
+    can_optimize_dashboards: true
+    can_export_dashboards: true
 
   power_user:
     can_create_lookups: true
@@ -313,6 +348,12 @@ management_permissions:
     can_update_scheduled_searches: true
     can_delete_scheduled_searches: false
     can_optimize_schedules: false
+    can_create_dashboards: true
+    can_update_dashboards: true
+    can_delete_dashboards: false
+    can_clone_dashboards: true
+    can_optimize_dashboards: true
+    can_export_dashboards: true
 
   standard_user:
     can_create_lookups: false
@@ -325,6 +366,12 @@ management_permissions:
     can_update_scheduled_searches: false
     can_delete_scheduled_searches: false
     can_optimize_schedules: false
+    can_create_dashboards: true
+    can_update_dashboards: true
+    can_delete_dashboards: false
+    can_clone_dashboards: false
+    can_optimize_dashboards: false
+    can_export_dashboards: false
 
   readonly_user:
     can_create_lookups: false
@@ -337,6 +384,12 @@ management_permissions:
     can_update_scheduled_searches: false
     can_delete_scheduled_searches: false
     can_optimize_schedules: false
+    can_create_dashboards: false
+    can_update_dashboards: false
+    can_delete_dashboards: false
+    can_clone_dashboards: false
+    can_optimize_dashboards: false
+    can_export_dashboards: false
 
 # Notification settings
 notifications:
@@ -367,3 +420,8 @@ notifications:
     scheduled_search_changes: true
     schedule_conflicts: true
     performance_violations: true
+    dashboard_changes: true
+    dashboard_deletions: true
+    dashboard_performance_issues: true
+    high_panel_count_dashboards: true
+    wildcard_searches_in_dashboards: true

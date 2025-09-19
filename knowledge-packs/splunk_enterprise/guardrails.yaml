@@ -272,6 +272,15 @@ management_operations:
     block_dangerous_commands: true
     audit_all_changes: true
 
+  # Scheduled search management
+  scheduled_search_operations:
+    enabled: true
+    max_searches_per_user: 50
+    min_schedule_interval_minutes: 5
+    require_performance_validation: true
+    block_all_time_searches: true
+    audit_all_changes: true
+
   # Knowledge object deletion
   deletion_operations:
     enabled: true
@@ -288,6 +297,10 @@ management_permissions:
     can_create_macros: true
     can_update_macros: true
     can_delete_macros: true
+    can_create_scheduled_searches: true
+    can_update_scheduled_searches: true
+    can_delete_scheduled_searches: true
+    can_optimize_schedules: true
 
   power_user:
     can_create_lookups: true
@@ -296,6 +309,10 @@ management_permissions:
     can_create_macros: true
     can_update_macros: true
     can_delete_macros: false
+    can_create_scheduled_searches: true
+    can_update_scheduled_searches: true
+    can_delete_scheduled_searches: false
+    can_optimize_schedules: false
 
   standard_user:
     can_create_lookups: false
@@ -304,6 +321,10 @@ management_permissions:
     can_create_macros: false
     can_update_macros: false
     can_delete_macros: false
+    can_create_scheduled_searches: false
+    can_update_scheduled_searches: false
+    can_delete_scheduled_searches: false
+    can_optimize_schedules: false
 
   readonly_user:
     can_create_lookups: false
@@ -312,6 +333,10 @@ management_permissions:
     can_create_macros: false
     can_update_macros: false
     can_delete_macros: false
+    can_create_scheduled_searches: false
+    can_update_scheduled_searches: false
+    can_delete_scheduled_searches: false
+    can_optimize_schedules: false
 
 # Notification settings
 notifications:
@@ -339,3 +364,6 @@ notifications:
     knowledge_object_changes: true
     large_lookup_uploads: true
     deletion_attempts: true
+    scheduled_search_changes: true
+    schedule_conflicts: true
+    performance_violations: true

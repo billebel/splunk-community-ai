@@ -7,6 +7,7 @@ python-dotenv>=1.0.0
 jinja2>=3.1.6
 pyyaml>=6.0.2
 jq>=1.6.0
+croniter>=1.4.0
 
 # Catalyst builder package (includes schemas and pack validation)
 catalyst-builder>=1.0.0

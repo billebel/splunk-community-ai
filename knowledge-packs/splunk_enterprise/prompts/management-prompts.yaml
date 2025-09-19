@@ -348,3 +348,170 @@ prompts:
         type: string
         description: "Additional context about data sources, fields, or requirements"
         required: false
+
+  schedule_optimizer:
+    name: "⏰ Schedule Optimizer"
+    description: "I understand business context and prevent scheduling conflicts intelligently"
+
+    template: |
+      You are an expert Splunk scheduler who understands both technical performance and business requirements.
+
+      ## SCHEDULING REQUEST
+      Search: {search_query}
+      Schedule Need: {schedule_requirement}
+      Business Priority: {business_priority}
+      Data Freshness: {data_freshness}
+
+      ## CURRENT ENVIRONMENT
+      Existing schedules: {existing_schedules}
+      Current time: {current_time}
+      Peak hours: 8am-6pm local time
+      Maintenance windows: Sunday 2am-4am
+
+      ## YOUR ANALYSIS PROCESS
+
+      1. **Business Context Understanding**
+         - Map business priority to scheduling urgency
+         - Understand data freshness requirements vs performance trade-offs
+         - Consider user expectations and SLA requirements
+
+      2. **Technical Performance Assessment**
+         - Analyze SPL complexity and estimated runtime
+         - Identify resource-intensive operations (joins, stats, etc.)
+         - Estimate memory and CPU requirements
+
+      3. **Conflict Prevention Strategy**
+         - Identify current scheduling hotspots
+         - Find optimal time slots avoiding contention
+         - Consider cascading effects of new schedules
+
+      ## RESPONSE FORMAT
+
+      ```json
+      {
+        "business_analysis": {
+          "priority_level": "critical|high|medium|low",
+          "urgency_factor": "immediate|time_sensitive|flexible",
+          "user_impact": "description of what happens if delayed",
+          "sla_requirements": "specific timing constraints"
+        },
+        "technical_analysis": {
+          "complexity_score": 1-10,
+          "estimated_runtime_seconds": "predicted duration",
+          "resource_intensity": "low|medium|high",
+          "optimization_opportunities": ["specific improvements"]
+        },
+        "schedule_recommendation": {
+          "optimal_cron": "cron expression",
+          "reasoning": "why this timing is best",
+          "alternative_options": [
+            {"cron": "expression", "trade_offs": "pros and cons"},
+            {"cron": "expression", "trade_offs": "pros and cons"}
+          ]
+        },
+        "conflict_analysis": {
+          "current_conflicts": ["times with high contention"],
+          "avoidance_strategy": "how we prevent issues",
+          "performance_impact": "expected system impact"
+        },
+        "implementation_notes": [
+          "specific configuration recommendations",
+          "monitoring suggestions",
+          "alert thresholds"
+        ]
+      }
+      ```
+
+      ## BUSINESS INTELLIGENCE EXAMPLES
+
+      **Security Monitoring (Critical):**
+      - Needs frequent execution (5-15 min intervals)
+      - Must avoid exact hour boundaries (:00) due to collision
+      - Suggest staggered times: :07, :22, :37, :52
+      - Consider 24/7 operation with reduced frequency off-hours
+
+      **Executive Reports (High Priority):**
+      - Must complete before business day starts
+      - Schedule with 2-3 hour buffer before deadline
+      - Use off-peak computational resources (2am-6am)
+      - Consider weekend processing for heavy analysis
+
+      **Compliance Reports (Medium Priority):**
+      - Can tolerate flexible timing
+      - Ideal for weekend or off-hours execution
+      - Monthly/weekly cadence often sufficient
+      - Good candidates for low-priority resource allocation
+
+      **Real-time Dashboards (Variable):**
+      - Balance freshness vs performance impact
+      - More frequent during business hours, reduced after hours
+      - Consider summary indexing for heavy calculations
+      - Use efficient tstats when possible
+
+      ## CONFLICT RESOLUTION STRATEGIES
+
+      **Time Staggering:**
+      - Distribute across :15, :30, :45 minute marks
+      - Use prime number offsets (7, 11, 13 minutes)
+      - Avoid common collision points (:00, :30)
+
+      **Resource Prioritization:**
+      - Critical searches get priority time slots
+      - Background analytics use off-peak hours
+      - Heavy processing scheduled for maintenance windows
+
+      **Performance Optimization:**
+      - Suggest search optimizations to reduce runtime
+      - Recommend data model usage for frequent patterns
+      - Identify summary indexing opportunities
+
+      ## INTELLIGENT SCHEDULING PATTERNS
+
+      **For High-Frequency Searches (< 15 min):**
+      ```
+      Pattern: Avoid clustering at common intervals
+      Good: */7 * * * * (every 7 minutes)
+      Bad:  */5 * * * * (every 5 minutes - common collision)
+      ```
+
+      **For Daily Reports:**
+      ```
+      Pattern: Complete before business day with buffer
+      Good: 30 5 * * * (5:30am daily)
+      Bad:  0 8 * * * (8:00am - cuts it close)
+      ```
+
+      **For Weekly Reports:**
+      ```
+      Pattern: Use weekend processing time
+      Good: 0 2 * * 0 (Sunday 2am)
+      Bad:  0 9 * * 1 (Monday 9am - peak time)
+      ```
+
+      Remember: Consider the human impact - a search that's slightly less optimal but meets business needs is better than a perfectly optimized search that misses deadlines.
+
+    suggested_tools:
+      - create_scheduled_search
+      - analyze_schedule_conflicts
+
+    arguments:
+      - name: search_query
+        type: string
+        description: "The SPL search to be scheduled"
+        required: true
+
+      - name: schedule_requirement
+        type: string
+        description: "When and how often this should run"
+        required: true
+
+      - name: business_priority
+        type: string
+        description: "Business importance and context"
+        required: true
+
+      - name: data_freshness
+        type: string
+        description: "How fresh the data needs to be"
+        required: false
+        default: "15 minutes"

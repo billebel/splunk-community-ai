@@ -1,0 +1,255 @@
+# Scheduled Search Management Tools - AI-Native Approach
+
+tools:
+  create_scheduled_search:
+    type: "create"
+    display_name: "⏰ Create Scheduled Search"
+    description: "Create a new scheduled search with AI-powered conflict detection and optimization"
+    business_purpose: "Transform search queries into optimally scheduled background searches"
+
+    key_capabilities:
+      - "Analyzes search complexity and suggests optimal timing"
+      - "Detects and prevents scheduling conflicts"
+      - "Understands business context for priority scheduling"
+      - "Automatically configures time ranges and performance settings"
+      - "Provides schedule staggering recommendations"
+
+    best_used_for:
+      - "Security monitoring searches that need regular execution"
+      - "Executive reports with specific delivery times"
+      - "Compliance searches with audit requirements"
+      - "Performance monitoring with real-time needs"
+
+    usage_examples:
+      - "Security team: 'Monitor failed logins every 15 minutes' → AI suggests optimal non-conflicting schedule"
+      - "Executive: 'Daily revenue report by 8am' → AI schedules 5:30am with buffer time"
+      - "Compliance: 'Weekly audit report' → AI suggests Sunday 2am for minimal impact"
+
+    parameters:
+      - name: "search_name"
+        type: "string"
+        required: true
+        description: "Name for the scheduled search"
+        validation: "^[a-zA-Z][a-zA-Z0-9_\\s]*$"
+        examples: ["Failed Login Monitor", "Daily Revenue Report", "Security Compliance Check"]
+
+      - name: "search_query"
+        type: "string"
+        required: true
+        description: "SPL search query to schedule"
+        examples: [
+          "index=security action=failure | stats count by user | where count > 3",
+          "index=sales | stats sum(revenue) by product",
+          "index=web | stats avg(response_time) by host"
+        ]
+
+      - name: "schedule_requirement"
+        type: "string"
+        required: true
+        description: "When and how often this should run"
+        examples: [
+          "Every 15 minutes during business hours",
+          "Daily at 7am",
+          "Every hour",
+          "Weekly on Sundays",
+          "Every 5 minutes (real-time monitoring)"
+        ]
+
+      - name: "business_priority"
+        type: "string"
+        required: true
+        description: "Business importance and context"
+        examples: [
+          "Critical security monitoring - needs immediate alerts",
+          "Executive dashboard - must complete before 8am",
+          "Background analytics - can run during off hours",
+          "Compliance requirement - weekly delivery needed"
+        ]
+
+      - name: "data_freshness"
+        type: "string"
+        required: false
+        default: "15 minutes"
+        description: "How fresh does the data need to be?"
+        examples: ["real-time", "5 minutes", "1 hour", "daily"]
+
+      - name: "app_context"
+        type: "string"
+        required: false
+        default: "search"
+        description: "Splunk app for the scheduled search"
+
+    endpoint: "/services/saved/searches"
+    method: "POST"
+
+    transform:
+      type: "python"
+      file: "transforms/schedule_management.py"
+      function: "create_scheduled_search"
+
+    security:
+      requires_approval: false
+      audit_trail: true
+      spl_validation: true
+      conflict_detection: true
+
+  update_search_schedule:
+    type: "update"
+    display_name: "📅 Update Search Schedule"
+    description: "Modify the schedule of an existing search with conflict prevention"
+    business_purpose: "Optimize search timing without disrupting existing operations"
+
+    parameters:
+      - name: "search_name"
+        type: "string"
+        required: true
+        description: "Name of the scheduled search to update"
+
+      - name: "new_schedule"
+        type: "string"
+        required: true
+        description: "New schedule requirement"
+        examples: [
+          "Change to every 30 minutes",
+          "Move to run at 6am instead of 8am",
+          "Switch to weekend-only execution"
+        ]
+
+      - name: "reason"
+        type: "string"
+        required: true
+        description: "Why the schedule needs to change"
+        examples: [
+          "Current schedule causing performance issues",
+          "Business requirements changed",
+          "Need to reduce resource usage"
+        ]
+
+    endpoint: "/services/saved/searches/{search_name}"
+    method: "POST"
+
+    transform:
+      type: "python"
+      file: "transforms/schedule_management.py"
+      function: "update_search_schedule"
+
+  analyze_schedule_conflicts:
+    type: "read"
+    display_name: "🔍 Analyze Schedule Conflicts"
+    description: "Identify scheduling hotspots and suggest optimizations"
+    business_purpose: "Prevent performance issues through intelligent schedule distribution"
+
+    key_capabilities:
+      - "Identifies minute-level scheduling conflicts"
+      - "Calculates resource contention patterns"
+      - "Suggests specific time slot alternatives"
+      - "Prioritizes based on business criticality"
+      - "Provides staggering recommendations"
+
+    parameters:
+      - name: "analysis_scope"
+        type: "string"
+        required: false
+        default: "all"
+        options: ["all", "business_hours", "off_hours", "specific_app"]
+        description: "Scope of schedule analysis"
+
+      - name: "conflict_threshold"
+        type: "integer"
+        required: false
+        default: 5
+        description: "Max concurrent searches before flagging conflict"
+
+    transform:
+      type: "python"
+      file: "transforms/schedule_management.py"
+      function: "analyze_schedule_conflicts"
+
+  optimize_search_schedules:
+    type: "update"
+    display_name: "🚀 Optimize All Schedules"
+    description: "AI-powered optimization of all scheduled searches"
+    business_purpose: "Automatically resolve conflicts and improve performance"
+
+    parameters:
+      - name: "optimization_strategy"
+        type: "string"
+        required: false
+        default: "balanced"
+        options: ["performance", "balanced", "minimal_changes"]
+        description: "Optimization approach"
+
+      - name: "business_constraints"
+        type: "string"
+        required: false
+        description: "Any business requirements to respect"
+        examples: [
+          "Executive reports must complete by 8am",
+          "Security searches have highest priority",
+          "No changes during maintenance windows"
+        ]
+
+      - name: "apply_changes"
+        type: "boolean"
+        required: false
+        default: false
+        description: "Actually apply the optimizations (false = preview only)"
+
+    transform:
+      type: "python"
+      file: "transforms/schedule_management.py"
+      function: "optimize_search_schedules"
+
+  delete_scheduled_search:
+    type: "delete"
+    display_name: "🗑️ Delete Scheduled Search"
+    description: "Remove a scheduled search with safety checks"
+    business_purpose: "Clean up unused searches without breaking dependencies"
+
+    parameters:
+      - name: "search_name"
+        type: "string"
+        required: true
+        description: "Name of scheduled search to delete"
+
+      - name: "confirm_deletion"
+        type: "boolean"
+        required: true
+        description: "Confirm you want to delete this search"
+
+      - name: "check_dependencies"
+        type: "boolean"
+        required: false
+        default: true
+        description: "Check if other objects depend on this search"
+
+    endpoint: "/services/saved/searches/{search_name}"
+    method: "DELETE"
+
+    transform:
+      type: "python"
+      file: "transforms/schedule_management.py"
+      function: "delete_scheduled_search"
+
+  validate_search_performance:
+    type: "read"
+    display_name: "⚡ Validate Search Performance"
+    description: "Analyze search complexity and predict performance impact"
+    business_purpose: "Prevent slow searches from impacting system performance"
+
+    parameters:
+      - name: "search_query"
+        type: "string"
+        required: true
+        description: "SPL query to analyze"
+
+      - name: "expected_frequency"
+        type: "string"
+        required: true
+        description: "How often this will run"
+        examples: ["every 5 minutes", "hourly", "daily"]
+
+    transform:
+      type: "python"
+      file: "transforms/schedule_management.py"
+      function: "validate_search_performance"
